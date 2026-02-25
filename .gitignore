@@ -1,3 +1,11 @@
 
 # temp datasets
 braidmod/data/*.json.tmp
+
+# local env + outputs
+braidmod/.venv/
+braidmod/artifacts/
+
+# large local datasets
+braidmod/data/burau_gnf_L20_p5_D96_N100000.json
+braidmod/data/*.json.tmp
