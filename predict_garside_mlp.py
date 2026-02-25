@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import json
+import math
 from pathlib import Path
 
 import torch
@@ -66,6 +67,26 @@ def build_model(checkpoint: dict, device: torch.device):
     return model
 
 
+def confusion_score_from_logits(logits: torch.Tensor) -> torch.Tensor:
+    """
+    Normalized entropy confusion score in [0, 1].
+    0 => very certain, 1 => maximally confused (uniform over classes).
+    Expects logits shape [B, C] or [C].
+    """
+    if logits.ndim == 1:
+        logits = logits.unsqueeze(0)
+    if logits.ndim != 2:
+        raise ValueError(f"Expected logits shape [B, C] or [C], got {tuple(logits.shape)}")
+    n_classes = logits.shape[-1]
+    if n_classes <= 1:
+        raise ValueError("Need at least 2 classes for confusion score")
+
+    log_probs = torch.log_softmax(logits, dim=-1)
+    probs = torch.exp(log_probs)
+    entropy = -(probs * log_probs).sum(dim=-1)
+    return entropy / math.log(float(n_classes))
+
+
 def main():
     parser = argparse.ArgumentParser(description="Run inference with a trained Garside MLP checkpoint.")
     parser.add_argument("--checkpoint", required=True, help="Path to best_model.pt")
@@ -92,6 +113,7 @@ def main():
 
     with torch.no_grad():
         factor_logits, desc_logits = model(x.unsqueeze(0).to(device))
+        confusion = confusion_score_from_logits(factor_logits)[0]
         probs = torch.softmax(factor_logits[0], dim=-1).cpu()
         topk = min(args.topk, probs.shape[0])
         top_probs, top_ids = torch.topk(probs, k=topk)
@@ -115,6 +137,8 @@ def main():
             "device": str(device),
             "D": expected_d,
             "p": p,
+            "confusion_score": round(float(confusion.item()), 6),
+            "confidence_score": round(float(1.0 - confusion.item()), 6),
             "top_predictions": top_predictions,
         }
 
