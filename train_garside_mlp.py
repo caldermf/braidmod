@@ -29,7 +29,7 @@ class TrainConfig:
     blocks: int = 3
     dropout: float = 0.1
     aux_weight: float = 0.2
-    use_aux_head: bool = True
+    task: str = "multitask"  # one of: final_factor, right_descent, multitask
     num_workers: int = 0
     grad_clip: float = 1.0
     out_dir: str = "artifacts"
@@ -183,6 +183,12 @@ def accuracy_from_logits(logits: torch.Tensor, targets: torch.Tensor) -> float:
     return (preds == targets).float().mean().item()
 
 
+def descent_exact_match_from_logits(logits: torch.Tensor, targets: torch.Tensor) -> float:
+    preds = (torch.sigmoid(logits) >= 0.5).float()
+    exact = (preds == targets).all(dim=-1).float()
+    return exact.mean().item()
+
+
 def make_loaders(dataset: BurauDataset, batch_size: int, val_fraction: float, seed: int, num_workers: int):
     if not (0.0 < val_fraction < 1.0):
         raise ValueError("val_fraction must be in (0,1)")
@@ -231,11 +237,38 @@ def cosine_with_warmup(step: int, total_steps: int, warmup_steps: int) -> float:
     return 0.5 * (1.0 + math.cos(math.pi * progress))
 
 
-def evaluate(model, loader, device, ce_loss, bce_loss, aux_weight):
+def compute_task_loss_and_metric(task, factor_logits, desc_logits, y_perm, y_desc, ce_loss, bce_loss, aux_weight):
+    if task == "right_descent":
+        if desc_logits is None:
+            raise ValueError("desc_logits is None for right_descent task")
+        loss = bce_loss(desc_logits, y_desc)
+        metric = descent_exact_match_from_logits(desc_logits, y_desc)
+        metric_name = "desc_exact"
+        return loss, metric, metric_name
+
+    if task == "final_factor":
+        loss = ce_loss(factor_logits, y_perm)
+        metric = accuracy_from_logits(factor_logits, y_perm)
+        metric_name = "factor_acc"
+        return loss, metric, metric_name
+
+    if task == "multitask":
+        if desc_logits is None:
+            raise ValueError("desc_logits is None for multitask")
+        loss = ce_loss(factor_logits, y_perm) + aux_weight * bce_loss(desc_logits, y_desc)
+        metric = accuracy_from_logits(factor_logits, y_perm)
+        metric_name = "factor_acc"
+        return loss, metric, metric_name
+
+    raise ValueError(f"Unknown task: {task}")
+
+
+def evaluate(model, loader, device, ce_loss, bce_loss, aux_weight, task):
     model.eval()
     total_loss = 0.0
-    total_acc = 0.0
+    total_metric = 0.0
     total_n = 0
+    metric_name = None
     with torch.no_grad():
         for x, y_perm, y_desc in loader:
             x = x.to(device, non_blocking=True)
@@ -243,15 +276,22 @@ def evaluate(model, loader, device, ce_loss, bce_loss, aux_weight):
             y_desc = y_desc.to(device, non_blocking=True)
 
             factor_logits, desc_logits = model(x)
-            loss = ce_loss(factor_logits, y_perm)
-            if desc_logits is not None and aux_weight > 0:
-                loss = loss + aux_weight * bce_loss(desc_logits, y_desc)
+            loss, metric, metric_name = compute_task_loss_and_metric(
+                task=task,
+                factor_logits=factor_logits,
+                desc_logits=desc_logits,
+                y_perm=y_perm,
+                y_desc=y_desc,
+                ce_loss=ce_loss,
+                bce_loss=bce_loss,
+                aux_weight=aux_weight,
+            )
 
             n = x.size(0)
             total_n += n
             total_loss += loss.item() * n
-            total_acc += accuracy_from_logits(factor_logits, y_perm) * n
-    return total_loss / total_n, total_acc / total_n
+            total_metric += metric * n
+    return total_loss / total_n, total_metric / total_n, metric_name
 
 
 def train(config: TrainConfig):
@@ -277,7 +317,7 @@ def train(config: TrainConfig):
         hidden_dim=config.hidden_dim,
         blocks=config.blocks,
         dropout=config.dropout,
-        use_aux_head=config.use_aux_head,
+        use_aux_head=(config.task != "final_factor"),
     ).to(device)
 
     optimizer = torch.optim.AdamW(
@@ -301,15 +341,15 @@ def train(config: TrainConfig):
     except TypeError:
         scaler = torch.cuda.amp.GradScaler(enabled=use_amp)
 
-    best_val_acc = -1.0
+    best_val_metric = -1.0
     best_path = os.path.join(config.out_dir, "best_model.pt")
 
-    global_step = 0
     for epoch in range(1, config.epochs + 1):
         model.train()
         running_loss = 0.0
-        running_acc = 0.0
+        running_metric = 0.0
         running_n = 0
+        metric_name = None
 
         for x, y_perm, y_desc in train_loader:
             x = x.to(device, non_blocking=True)
@@ -319,9 +359,16 @@ def train(config: TrainConfig):
             optimizer.zero_grad(set_to_none=True)
             with torch.autocast(device_type=device.type, dtype=torch.float16, enabled=use_amp):
                 factor_logits, desc_logits = model(x)
-                loss = ce_loss(factor_logits, y_perm)
-                if desc_logits is not None and config.aux_weight > 0:
-                    loss = loss + config.aux_weight * bce_loss(desc_logits, y_desc)
+                loss, metric, metric_name = compute_task_loss_and_metric(
+                    task=config.task,
+                    factor_logits=factor_logits,
+                    desc_logits=desc_logits,
+                    y_perm=y_perm,
+                    y_desc=y_desc,
+                    ce_loss=ce_loss,
+                    bce_loss=bce_loss,
+                    aux_weight=config.aux_weight,
+                )
 
             scaler.scale(loss).backward()
             scaler.unscale_(optimizer)
@@ -333,22 +380,21 @@ def train(config: TrainConfig):
             n = x.size(0)
             running_n += n
             running_loss += loss.item() * n
-            running_acc += accuracy_from_logits(factor_logits, y_perm) * n
-            global_step += 1
-
+            running_metric += metric * n
         train_loss = running_loss / running_n
-        train_acc = running_acc / running_n
-        val_loss, val_acc = evaluate(
+        train_metric = running_metric / running_n
+        val_loss, val_metric, metric_name = evaluate(
             model=model,
             loader=val_loader,
             device=device,
             ce_loss=ce_loss,
             bce_loss=bce_loss,
-            aux_weight=config.aux_weight if config.use_aux_head else 0.0,
+            aux_weight=config.aux_weight,
+            task=config.task,
         )
 
-        if val_acc > best_val_acc:
-            best_val_acc = val_acc
+        if val_metric > best_val_metric:
+            best_val_metric = val_metric
             torch.save(
                 {
                     "model_state": model.state_dict(),
@@ -356,19 +402,20 @@ def train(config: TrainConfig):
                     "D": dataset.D,
                     "p": config.p,
                     "perm_classes": [list(p_) for p_ in PERMUTATIONS_S4],
-                    "best_val_acc": best_val_acc,
+                    "best_val_metric": best_val_metric,
+                    "best_metric_name": metric_name,
                 },
                 best_path,
             )
 
         print(
             f"epoch={epoch:03d} "
-            f"train_loss={train_loss:.4f} train_acc={train_acc:.4f} "
-            f"val_loss={val_loss:.4f} val_acc={val_acc:.4f} "
+            f"train_loss={train_loss:.4f} train_{metric_name}={train_metric:.4f} "
+            f"val_loss={val_loss:.4f} val_{metric_name}={val_metric:.4f} "
             f"lr={scheduler.get_last_lr()[0]:.2e}"
         )
 
-    print(f"best_val_acc={best_val_acc:.4f}")
+    print(f"best_val_{metric_name}={best_val_metric:.4f}")
     print(f"best_checkpoint={best_path}")
 
 
@@ -387,7 +434,13 @@ def parse_args():
     parser.add_argument("--blocks", type=int, default=3)
     parser.add_argument("--dropout", type=float, default=0.1)
     parser.add_argument("--aux-weight", type=float, default=0.2)
-    parser.add_argument("--no-aux-head", action="store_true")
+    parser.add_argument(
+        "--task",
+        type=str,
+        default="multitask",
+        choices=["final_factor", "right_descent", "multitask"],
+        help="Training objective.",
+    )
     parser.add_argument("--num-workers", type=int, default=0)
     parser.add_argument("--grad-clip", type=float, default=1.0)
     parser.add_argument("--out-dir", type=str, default="artifacts")
@@ -411,7 +464,7 @@ if __name__ == "__main__":
         blocks=args.blocks,
         dropout=args.dropout,
         aux_weight=args.aux_weight,
-        use_aux_head=not args.no_aux_head,
+        task=args.task,
         num_workers=args.num_workers,
         grad_clip=args.grad_clip,
         out_dir=args.out_dir,

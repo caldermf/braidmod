@@ -1,13 +1,26 @@
 #!/usr/bin/env python3
 import argparse
+import os
 import re
+import tempfile
 from pathlib import Path
 
+cache_root = Path(tempfile.gettempdir()) / "braidmod-cache"
+cache_root.mkdir(parents=True, exist_ok=True)
+os.environ.setdefault("XDG_CACHE_HOME", str(cache_root))
+os.environ.setdefault("MPLCONFIGDIR", str(cache_root / "matplotlib"))
+
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 
 LINE_RE = re.compile(
-    r"epoch=(\d+)\s+train_loss=([0-9.]+)\s+train_acc=([0-9.]+)\s+val_loss=([0-9.]+)\s+val_acc=([0-9.]+)"
+    r"epoch=(\d+)\s+"
+    r"train_loss=([0-9.]+)\s+"
+    r"train_([A-Za-z0-9_]+)=([0-9.]+)\s+"
+    r"val_loss=([0-9.]+)\s+"
+    r"val_([A-Za-z0-9_]+)=([0-9.]+)"
 )
 
 
@@ -15,22 +28,35 @@ def parse_log(text: str):
     epochs = []
     train_loss = []
     val_loss = []
-    train_acc = []
-    val_acc = []
+    train_metric = []
+    val_metric = []
+    metric_name = None
 
     for line in text.splitlines():
         m = LINE_RE.search(line)
         if not m:
             continue
+        train_metric_name = m.group(3)
+        val_metric_name = m.group(6)
+        if train_metric_name != val_metric_name:
+            raise ValueError(
+                f"Mismatched train/val metric names in line: {train_metric_name} vs {val_metric_name}"
+            )
+        if metric_name is None:
+            metric_name = train_metric_name
+        elif metric_name != train_metric_name:
+            raise ValueError(
+                f"Found multiple metric names in one log: {metric_name} and {train_metric_name}"
+            )
         epochs.append(int(m.group(1)))
         train_loss.append(float(m.group(2)))
-        train_acc.append(float(m.group(3)))
-        val_loss.append(float(m.group(4)))
-        val_acc.append(float(m.group(5)))
+        train_metric.append(float(m.group(4)))
+        val_loss.append(float(m.group(5)))
+        val_metric.append(float(m.group(7)))
 
     if not epochs:
         raise ValueError("No epoch lines found in log.")
-    return epochs, train_loss, val_loss, train_acc, val_acc
+    return epochs, train_loss, val_loss, train_metric, val_metric, metric_name
 
 
 def main():
@@ -41,7 +67,7 @@ def main():
     args = parser.parse_args()
 
     log_text = Path(args.log).read_text(encoding="utf-8")
-    epochs, train_loss, val_loss, train_acc, val_acc = parse_log(log_text)
+    epochs, train_loss, val_loss, train_metric, val_metric, metric_name = parse_log(log_text)
 
     fig, axes = plt.subplots(1, 2, figsize=(12, 4.5))
 
@@ -53,11 +79,11 @@ def main():
     axes[0].grid(alpha=0.3)
     axes[0].legend()
 
-    axes[1].plot(epochs, train_acc, label="train_acc")
-    axes[1].plot(epochs, val_acc, label="val_acc")
+    axes[1].plot(epochs, train_metric, label=f"train_{metric_name}")
+    axes[1].plot(epochs, val_metric, label=f"val_{metric_name}")
     axes[1].set_xlabel("Epoch")
-    axes[1].set_ylabel("Accuracy")
-    axes[1].set_title("Accuracy")
+    axes[1].set_ylabel(metric_name)
+    axes[1].set_title(metric_name)
     axes[1].grid(alpha=0.3)
     axes[1].legend()
 

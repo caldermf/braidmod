@@ -50,6 +50,9 @@ def build_model(checkpoint: dict, device: torch.device):
     config = checkpoint.get("config", {})
     p = int(checkpoint["p"])
     d = int(checkpoint["D"])
+    use_aux_head = config.get("use_aux_head")
+    if use_aux_head is None:
+        use_aux_head = config.get("task", "multitask") != "final_factor"
     model = BurauEmbeddingMLP(
         p=p,
         D=d,
@@ -57,7 +60,7 @@ def build_model(checkpoint: dict, device: torch.device):
         hidden_dim=int(config.get("hidden_dim", 1024)),
         blocks=int(config.get("blocks", 3)),
         dropout=float(config.get("dropout", 0.1)),
-        use_aux_head=bool(config.get("use_aux_head", True)),
+        use_aux_head=bool(use_aux_head),
     ).to(device)
     state = checkpoint.get("model_state")
     if state is None:
