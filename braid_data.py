@@ -154,6 +154,298 @@ class GNF:
         return f"GNF(d={self.d}, factors={perms})"
 
 
+def _perm_from_adjacent_word(word, n):
+    """
+    Apply a 0-based adjacent-transposition word left-to-right to the identity.
+    """
+    perm = list(range(n))
+    for idx in word:
+        if idx < 0 or idx >= n - 1:
+            raise ValueError(f"Adjacent-transposition index must be in 0..{n - 2}")
+        perm[idx], perm[idx + 1] = perm[idx + 1], perm[idx]
+    return tuple(perm)
+
+
+def _tau_perm(perm):
+    """
+    Conjugation by Delta on a simple braid, expressed on the permutation braid.
+    """
+    perm = _validate_perm(perm)
+    n = len(perm)
+    mapped_word = [n - 2 - idx for idx in GarsideFactor(perm).artin_factors()]
+    return _perm_from_adjacent_word(mapped_word, n)
+
+
+def _poly_int_const(c):
+    if c == 0:
+        return {}
+    return {0: c}
+
+
+def _poly_int_monomial(coeff, exp):
+    if coeff == 0:
+        return {}
+    return {exp: coeff}
+
+
+def _poly_int_add(a, b):
+    out = dict(a)
+    for exp, coeff in b.items():
+        out[exp] = out.get(exp, 0) + coeff
+        if out[exp] == 0:
+            del out[exp]
+    return out
+
+
+def _poly_int_mul(a, b):
+    if not a or not b:
+        return {}
+    out = {}
+    for ea, ca in a.items():
+        for eb, cb in b.items():
+            exp = ea + eb
+            out[exp] = out.get(exp, 0) + ca * cb
+            if out[exp] == 0:
+                del out[exp]
+    return out
+
+
+def _poly_int_matrix_eye(m):
+    eye = [[{} for _ in range(m)] for _ in range(m)]
+    for i in range(m):
+        eye[i][i] = _poly_int_const(1)
+    return eye
+
+
+def _poly_int_matrix_mul(a, b):
+    rows = len(a)
+    mid = len(a[0])
+    cols = len(b[0])
+    out = [[{} for _ in range(cols)] for _ in range(rows)]
+    for i in range(rows):
+        for j in range(cols):
+            acc = {}
+            for k in range(mid):
+                term = _poly_int_mul(a[i][k], b[k][j])
+                if term:
+                    acc = _poly_int_add(acc, term)
+            out[i][j] = acc
+    return out
+
+
+def _freeze_poly_matrix(poly_mat):
+    return tuple(
+        tuple(tuple(sorted(entry.items())) for entry in row)
+        for row in poly_mat
+    )
+
+
+def _burau_generator_matrix_exact(n, i, inverse=False):
+    """
+    Reduced Burau matrix for sigma_i over Z[v, v^{-1}] using the repo convention.
+    """
+    if n < 2:
+        raise ValueError("Need n >= 2")
+    if i < 1 or i > n - 1:
+        raise ValueError(f"Generator index i must be in 1..{n-1}")
+
+    m = n - 1
+    mat = _poly_int_matrix_eye(m)
+
+    one = _poly_int_const(1)
+    v = _poly_int_monomial(1, 1)
+    minus_v = _poly_int_monomial(-1, 1)
+    v_inv = _poly_int_monomial(1, -1)
+    minus_v_inv = _poly_int_monomial(-1, -1)
+
+    if i == 1:
+        if not inverse:
+            mat[0][0] = minus_v
+            mat[0][1] = one
+        else:
+            mat[0][0] = minus_v_inv
+            mat[0][1] = v_inv
+    elif i == n - 1:
+        if not inverse:
+            mat[m - 1][m - 2] = v
+            mat[m - 1][m - 1] = minus_v
+        else:
+            mat[m - 1][m - 2] = one
+            mat[m - 1][m - 1] = minus_v_inv
+    else:
+        r0 = i - 2
+        r1 = i - 1
+        r2 = i
+        mat[r0][r0] = one
+        mat[r0][r1] = {}
+        mat[r0][r2] = {}
+        if not inverse:
+            mat[r1][r0] = v
+            mat[r1][r1] = minus_v
+            mat[r1][r2] = one
+        else:
+            mat[r1][r0] = one
+            mat[r1][r1] = minus_v_inv
+            mat[r1][r2] = v_inv
+        mat[r2][r0] = {}
+        mat[r2][r1] = {}
+        mat[r2][r2] = one
+
+    return mat
+
+
+def burau_polynomial_matrix(word, n=4):
+    """
+    Evaluate the reduced Burau representation over Z[v, v^{-1}].
+
+    word: iterable of signed generator indices.
+      k > 0 means sigma_k, k < 0 means sigma_|k|^{-1}.
+    Returns an (n-1)x(n-1) matrix with Laurent-polynomial dict entries:
+      {exp: integer_coeff, ...}
+    """
+    if n < 2:
+        raise ValueError("n must be >= 2")
+
+    m = n - 1
+    result = _poly_int_matrix_eye(m)
+    for g in word:
+        if g == 0:
+            raise ValueError("Generator index 0 is invalid")
+        i = abs(g)
+        gen_mat = _burau_generator_matrix_exact(n, i, inverse=(g < 0))
+        result = _poly_int_matrix_mul(result, gen_mat)
+    return result
+
+
+_SIMPLE_BRAID_TABLE_CACHE = {}
+
+
+def _simple_braid_tables(n):
+    cached = _SIMPLE_BRAID_TABLE_CACHE.get(n)
+    if cached is not None:
+        return cached
+
+    all_perms = list(permutations(range(n)))
+    identity = GNF.identity_perm(n)
+    delta = GNF.delta_perm(n)
+    delta_word = [idx + 1 for idx in GarsideFactor(delta).artin_factors()]
+
+    simple_words = {
+        perm: [idx + 1 for idx in GarsideFactor(perm).artin_factors()]
+        for perm in all_perms
+    }
+    simple_mats = {
+        perm: burau_polynomial_matrix(simple_words[perm], n=n)
+        for perm in all_perms
+    }
+    tau = {perm: _tau_perm(perm) for perm in all_perms}
+    generator_to_perm = {
+        gen: _perm_from_adjacent_word([gen - 1], n)
+        for gen in range(1, n)
+    }
+
+    def candidate_words():
+        yield (0, ())
+        yield (1, ())
+
+        for perm in all_perms:
+            if perm not in (identity, delta):
+                yield (0, (perm,))
+                yield (1, (perm,))
+
+        for left in all_perms:
+            if left in (identity, delta):
+                continue
+            left_factor = GarsideFactor(left)
+            for right in all_perms:
+                if right in (identity, delta):
+                    continue
+                right_factor = GarsideFactor(right)
+                if left_factor.right_descent().issuperset(right_factor.left_descent()):
+                    yield (0, (left, right))
+
+    normal_forms = {}
+    for d, factors in candidate_words():
+        word = []
+        if d:
+            word.extend(delta_word)
+        for perm in factors:
+            word.extend(simple_words[perm])
+        key = _freeze_poly_matrix(burau_polynomial_matrix(word, n=n))
+        previous = normal_forms.get(key)
+        if previous is not None and previous != (d, factors):
+            raise RuntimeError(
+                f"Non-unique simple normal form candidate at n={n}: {previous} vs {(d, factors)}"
+            )
+        normal_forms[key] = (d, factors)
+
+    pair_table = {}
+    pair_inputs = [perm for perm in all_perms if perm != delta]
+    for left in pair_inputs:
+        for right in pair_inputs:
+            product = _poly_int_matrix_mul(simple_mats[left], simple_mats[right])
+            key = _freeze_poly_matrix(product)
+            if key not in normal_forms:
+                raise RuntimeError(
+                    f"Could not normalize product of simple braids {left} and {right} in B_{n}"
+                )
+            pair_table[(left, right)] = normal_forms[key]
+
+    cached = {
+        "identity": identity,
+        "delta": delta,
+        "delta_word": delta_word,
+        "simple_words": simple_words,
+        "simple_mats": simple_mats,
+        "tau": tau,
+        "generator_to_perm": generator_to_perm,
+        "pair_table": pair_table,
+    }
+    _SIMPLE_BRAID_TABLE_CACHE[n] = cached
+    return cached
+
+
+def positive_word_to_garside_normal_form(word, n=4):
+    """
+    Compute the left Garside normal form of a positive Artin word.
+
+    Returns `(d, factor_perms)`, representing `Delta^d * w1 * ... * w_ell`.
+    The factor list may be empty for a pure Delta power.
+    """
+    tables = _simple_braid_tables(n)
+    factors = []
+    d = 0
+
+    for g in word:
+        if g <= 0:
+            raise ValueError("This normalizer currently expects a positive Artin word")
+        if g >= n:
+            raise ValueError(f"Generator index must lie in 1..{n - 1}")
+        factors.append(tables["generator_to_perm"][g])
+
+        changed = True
+        while changed:
+            changed = False
+            for idx in range(len(factors) - 2, -1, -1):
+                left = factors[idx]
+                right = factors[idx + 1]
+                pair_d, pair_factors = tables["pair_table"][(left, right)]
+                pair_factors = list(pair_factors)
+                if pair_d == 0 and pair_factors == [left, right]:
+                    continue
+
+                prefix = factors[:idx]
+                suffix = factors[idx + 2:]
+                if pair_d:
+                    d += pair_d
+                    prefix = [tables["tau"][perm] for perm in prefix]
+                factors = prefix + pair_factors + suffix
+                changed = True
+                break
+
+    return d, factors
+
+
 def _poly_const(c, p):
     c %= p
     if c == 0:
@@ -226,39 +518,47 @@ def _burau_generator_matrix_poly(n, i, p, inverse=False):
     m = n - 1
     mat = _poly_matrix_eye(m, p)
 
-    if not inverse:
-        minus_v = _poly_monomial(-1, 1, p)
-        minus_v2 = _poly_monomial(-1, 2, p)
-    else:
-        minus_v = _poly_monomial(-1, -1, p)
-        minus_v2 = _poly_monomial(-1, -2, p)
+    one = _poly_const(1, p)
+    v = _poly_monomial(1, 1, p)
+    minus_v = _poly_monomial(-1, 1, p)
+    v_inv = _poly_monomial(1, -1, p)
+    minus_v_inv = _poly_monomial(-1, -1, p)
 
     # Convert generator index to reduced Burau matrix coordinates.
     # sigma_1 uses rows/cols 0..1, sigma_{n-1} uses m-2..m-1,
     # interior sigma_i uses block on (i-2, i-1, i) in 0-based coordinates.
     if i == 1:
-        mat[0][0] = minus_v2
-        mat[0][1] = minus_v
-        mat[1][0] = {}
-        mat[1][1] = _poly_const(1, p)
+        if not inverse:
+            mat[0][0] = minus_v
+            mat[0][1] = one
+        else:
+            mat[0][0] = minus_v_inv
+            mat[0][1] = v_inv
     elif i == n - 1:
-        mat[m - 2][m - 2] = _poly_const(1, p)
-        mat[m - 2][m - 1] = {}
-        mat[m - 1][m - 2] = minus_v
-        mat[m - 1][m - 1] = minus_v2
+        if not inverse:
+            mat[m - 1][m - 2] = v
+            mat[m - 1][m - 1] = minus_v
+        else:
+            mat[m - 1][m - 2] = one
+            mat[m - 1][m - 1] = minus_v_inv
     else:
         r0 = i - 2
         r1 = i - 1
         r2 = i
-        mat[r0][r0] = _poly_const(1, p)
+        mat[r0][r0] = one
         mat[r0][r1] = {}
         mat[r0][r2] = {}
-        mat[r1][r0] = minus_v
-        mat[r1][r1] = minus_v2
-        mat[r1][r2] = minus_v
+        if not inverse:
+            mat[r1][r0] = v
+            mat[r1][r1] = minus_v
+            mat[r1][r2] = one
+        else:
+            mat[r1][r0] = one
+            mat[r1][r1] = minus_v_inv
+            mat[r1][r2] = v_inv
         mat[r2][r0] = {}
         mat[r2][r1] = {}
-        mat[r2][r2] = _poly_const(1, p)
+        mat[r2][r2] = one
 
     return mat
 
@@ -348,6 +648,80 @@ def burau_mod_p_tensor_from_gnf(gnf, p, D):
     if gnf.n != 4:
         raise ValueError("This tensor interface currently expects GNF in S_4")
     return burau_mod_p_tensor(gnf_to_braid_word(gnf), p, D, n=4)
+
+
+def burau_mod_p_matches_delta_power_scalar(word, p, n=4, delta_power=None):
+    """
+    Check whether Burau(word) is a monomial scalar multiple of Burau(Delta^d) mod p.
+
+    Returns a dict with:
+      - `matches`: bool
+      - `delta_power`: d reduced modulo 2 if inferred, otherwise the requested d
+      - `scalar`: polynomial dict for the monomial scalar when `matches` is True
+      - `matrix`: Burau(word) modulo p
+      - `target`: Burau(Delta^d) modulo p for the tested d
+    """
+    if p <= 1:
+        raise ValueError("p must be >= 2")
+    if n < 2:
+        raise ValueError("n must be >= 2")
+
+    image = burau_mod_p_polynomial_matrix(word, p, n=n)
+    delta_word = [idx + 1 for idx in GarsideFactor(GNF.delta_perm(n)).artin_factors()]
+
+    if delta_power is None:
+        candidates = [0, 1]
+    else:
+        if not isinstance(delta_power, int):
+            raise TypeError("delta_power must be an integer")
+        candidates = [delta_power]
+
+    for d in candidates:
+        target = burau_mod_p_polynomial_matrix(delta_word * d, p, n=n)
+        scalar = None
+        matches = True
+        for i in range(n - 1):
+            for j in range(n - 1):
+                target_entry = target[i][j]
+                image_entry = image[i][j]
+                if not target_entry:
+                    if image_entry:
+                        matches = False
+                        break
+                    continue
+                if scalar is None:
+                    if len(target_entry) != 1 or len(image_entry) != 1:
+                        matches = False
+                        break
+                    (target_exp, target_coeff), = target_entry.items()
+                    (image_exp, image_coeff), = image_entry.items()
+                    if target_coeff % p == 0:
+                        matches = False
+                        break
+                    inv_coeff = pow(target_coeff, -1, p)
+                    scalar = {(image_exp - target_exp): (image_coeff * inv_coeff) % p}
+                expected = _poly_mul(scalar, target_entry, p)
+                if image_entry != expected:
+                    matches = False
+                    break
+            if not matches:
+                break
+        if matches and scalar is not None:
+            return {
+                "matches": True,
+                "delta_power": d,
+                "scalar": scalar,
+                "matrix": image,
+                "target": target,
+            }
+
+    return {
+        "matches": False,
+        "delta_power": delta_power,
+        "scalar": None,
+        "matrix": image,
+        "target": None,
+    }
 
 
 class DataSetBuilder:

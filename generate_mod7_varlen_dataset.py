@@ -115,6 +115,16 @@ def parse_args():
     parser.add_argument("--d-min", type=int, default=0, help="Minimum Delta exponent d (inclusive).")
     parser.add_argument("--d-max", type=int, default=0, help="Maximum Delta exponent d (inclusive).")
     parser.add_argument("--seed", type=int, default=42, help="Random seed.")
+    parser.add_argument(
+        "--length-mode",
+        choices=("iid_uniform", "balanced_uniform"),
+        default="iid_uniform",
+        help=(
+            "How to sample lengths in [length_min, length_max]. "
+            "'iid_uniform' draws each sample independently; "
+            "'balanced_uniform' precomputes a shuffled schedule with per-length counts differing by at most 1."
+        ),
+    )
     parser.add_argument("--progress-every", type=int, default=1000, help="Progress print frequency.")
     parser.add_argument(
         "--heartbeat-secs",
@@ -144,6 +154,18 @@ def main():
 
     sampler = FastGNFSampler(n=args.n, d_range=(args.d_min, args.d_max), seed=args.seed)
     length_rng = random.Random(args.seed + 1)
+    lengths = list(range(args.length_min, args.length_max + 1))
+
+    if args.length_mode == "balanced_uniform":
+        base = args.num_samples // len(lengths)
+        remainder = args.num_samples % len(lengths)
+        length_schedule = []
+        for idx, L in enumerate(lengths):
+            copies = base + (1 if idx < remainder else 0)
+            length_schedule.extend([L] * copies)
+        length_rng.shuffle(length_schedule)
+    else:
+        length_schedule = None
 
     started = time.time()
     last_heartbeat = started
@@ -154,7 +176,10 @@ def main():
         for idx in range(args.num_samples):
             retries_for_depth = 0
             while True:
-                L = length_rng.randint(args.length_min, args.length_max)
+                if length_schedule is None:
+                    L = length_rng.randint(args.length_min, args.length_max)
+                else:
+                    L = length_schedule[idx]
 
                 now = time.time()
                 if now - last_heartbeat >= args.heartbeat_secs:

@@ -1,16 +1,20 @@
 
 # temp datasets
 data/*.json.tmp
+data/*.json.tmp.*
 
 # local env + outputs
 .venv/
 artifacts/
+slurm_logs/
 tmp_artifacts/
 tmp_artifacts_rd/
 tmp_artifacts_identity_test/
 
 # large local datasets
 data/burau_gnf_L20_p5_D96_N100000.json
+data/burau_gnf_L15to40_p5_D96_N100000_corrected.json
+data/burau_gnf_L30to60_p5_D96_N200000_uniform.json
 data/burau_gnf_L20to50_p5_D256_N100000.json
 data/burau_gnf_L5to100_p7_D384_N200000.json
 data/*.json.tmp
