@@ -75,6 +75,20 @@ class FrontierBatch:
         return int(self.tensors.shape[0])
 
 
+def _move_frontier_batch(frontier: FrontierBatch, device: torch.device) -> FrontierBatch:
+    return FrontierBatch(
+        tensors=frontier.tensors.to(device=device),
+        min_degrees=frontier.min_degrees.to(device=device),
+        words=frontier.words.to(device=device),
+        lengths=frontier.lengths.to(device=device),
+        last_factor_ids=frontier.last_factor_ids.to(device=device),
+        xent_history=frontier.xent_history.to(device=device) if frontier.xent_history is not None else None,
+        xent_max=frontier.xent_max.to(device=device) if frontier.xent_max is not None else None,
+        scores=frontier.scores.to(device=device) if frontier.scores is not None else None,
+        bucket_ids=frontier.bucket_ids.to(device=device) if frontier.bucket_ids is not None else None,
+    )
+
+
 @dataclass
 class GarsideTables:
     factor_perms: torch.Tensor
@@ -736,22 +750,24 @@ class GPUBuckets:
                 merged_priorities,
             )
 
-    def materialize(self) -> FrontierBatch:
+    def materialize(self, out_device: Optional[torch.device] = None) -> FrontierBatch:
         if not self.data:
             raise RuntimeError("No bucket data to materialize")
 
+        if out_device is None:
+            out_device = self.device
         ordered = sorted(self.data.items(), key=lambda item: item[0])
-        tensors = torch.cat([entry[1][0] for entry in ordered], dim=0)
-        min_degrees = torch.cat([entry[1][1] for entry in ordered], dim=0)
-        words = torch.cat([entry[1][2] for entry in ordered], dim=0)
-        lengths = torch.cat([entry[1][3] for entry in ordered], dim=0)
-        last_factor_ids = torch.cat([entry[1][4] for entry in ordered], dim=0)
-        xent_history = torch.cat([entry[1][5] for entry in ordered], dim=0)
-        xent_max = torch.cat([entry[1][6] for entry in ordered], dim=0)
-        scores = torch.cat([entry[1][7] for entry in ordered], dim=0)
+        tensors = torch.cat([entry[1][0].to(device=out_device) for entry in ordered], dim=0)
+        min_degrees = torch.cat([entry[1][1].to(device=out_device) for entry in ordered], dim=0)
+        words = torch.cat([entry[1][2].to(device=out_device) for entry in ordered], dim=0)
+        lengths = torch.cat([entry[1][3].to(device=out_device) for entry in ordered], dim=0)
+        last_factor_ids = torch.cat([entry[1][4].to(device=out_device) for entry in ordered], dim=0)
+        xent_history = torch.cat([entry[1][5].to(device=out_device) for entry in ordered], dim=0)
+        xent_max = torch.cat([entry[1][6].to(device=out_device) for entry in ordered], dim=0)
+        scores = torch.cat([entry[1][7].to(device=out_device) for entry in ordered], dim=0)
         bucket_ids = torch.cat(
             [
-                torch.full((entry[1][0].shape[0],), entry[0], dtype=torch.long, device=self.device)
+                torch.full((entry[1][0].shape[0],), entry[0], dtype=torch.long, device=out_device)
                 for entry in ordered
             ],
             dim=0,
@@ -968,6 +984,7 @@ class ReservoirSearchBraidmod:
     def _select_best(self, frontier: FrontierBatch) -> FrontierBatch:
         if frontier.scores is None:
             return frontier
+        select_device = frontier.scores.device
 
         total = frontier.size
         if self.config.use_best <= 0 or total <= self.config.use_best:
@@ -1000,7 +1017,7 @@ class ReservoirSearchBraidmod:
                 total_selected += bucket_count
                 continue
 
-            choice = torch.randperm(bucket_count, device=self.device)[:remaining]
+            choice = torch.randperm(bucket_count, device=select_device)[:remaining]
             selected_idx_parts.append(bucket_idx[choice])
             total_selected += remaining
             break
@@ -1316,8 +1333,9 @@ class ReservoirSearchBraidmod:
             )
             bucket_time += time.time() - t0
 
-        materialized = buckets.materialize()
+        materialized = buckets.materialize(out_device=torch.device("cpu"))
         selected = materialized if is_bootstrap else self._select_best(materialized)
+        next_frontier = _move_frontier_batch(selected, self.device)
         level_time = time.time() - level_start
 
         score_mean = score_sum / float(num_candidates)
@@ -1353,7 +1371,7 @@ class ReservoirSearchBraidmod:
         if frontier_summary is not None:
             summary["frontier_points"] = frontier_summary
         self.level_summaries.append(summary)
-        self.frontier = selected
+        self.frontier = next_frontier
 
         print(
             f"  kept={materialized.size} selected={selected.size} buckets={len(buckets.data)} "
