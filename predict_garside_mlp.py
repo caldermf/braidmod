@@ -29,21 +29,24 @@ def load_tensor(args, expected_d: int):
         if "burau_tensor" not in records[args.index]:
             raise ValueError("Selected record does not contain 'burau_tensor'")
         tensor = records[args.index]["burau_tensor"]
+        min_degree = int(records[args.index].get("burau_min_degree", 0))
     else:
         payload = json.loads(Path(args.tensor_path).read_text(encoding="utf-8"))
         if isinstance(payload, dict):
             if "burau_tensor" not in payload:
                 raise ValueError("Tensor JSON dict must contain key 'burau_tensor'")
             tensor = payload["burau_tensor"]
+            min_degree = int(payload.get("burau_min_degree", 0))
         else:
             tensor = payload
+            min_degree = 0
 
     x = torch.tensor(tensor, dtype=torch.long)
     if x.ndim != 3 or tuple(x.shape[1:]) != (3, 3):
         raise ValueError(f"Expected tensor shape [D, 3, 3], got {tuple(x.shape)}")
     if x.shape[0] != expected_d:
         raise ValueError(f"Checkpoint expects D={expected_d}, got D={x.shape[0]}")
-    return x
+    return x, min_degree
 
 
 def build_model(checkpoint: dict, device: torch.device):
@@ -53,6 +56,7 @@ def build_model(checkpoint: dict, device: torch.device):
     use_aux_head = config.get("use_aux_head")
     if use_aux_head is None:
         use_aux_head = config.get("task", "multitask") != "final_factor"
+    use_min_degree = bool(config.get("use_min_degree", False))
     model = BurauEmbeddingMLP(
         p=p,
         D=d,
@@ -61,6 +65,7 @@ def build_model(checkpoint: dict, device: torch.device):
         blocks=int(config.get("blocks", 3)),
         dropout=float(config.get("dropout", 0.1)),
         use_aux_head=bool(use_aux_head),
+        use_min_degree=use_min_degree,
     ).to(device)
     state = checkpoint.get("model_state")
     if state is None:
@@ -110,12 +115,13 @@ def main():
 
     expected_d = int(checkpoint["D"])
     p = int(checkpoint["p"])
-    x = load_tensor(args, expected_d=expected_d)
+    x, min_degree = load_tensor(args, expected_d=expected_d)
     if x.min().item() < 0 or x.max().item() >= p:
         raise ValueError(f"Input values must be in [0, {p - 1}]")
 
     with torch.no_grad():
-        factor_logits, desc_logits = model(x.unsqueeze(0).to(device))
+        min_degree_tensor = torch.tensor([min_degree], dtype=torch.float32, device=device)
+        factor_logits, desc_logits = model(x.unsqueeze(0).to(device), min_degree=min_degree_tensor)
         confusion = confusion_score_from_logits(factor_logits)[0]
         probs = torch.softmax(factor_logits[0], dim=-1).cpu()
         topk = min(args.topk, probs.shape[0])
@@ -140,6 +146,7 @@ def main():
             "device": str(device),
             "D": expected_d,
             "p": p,
+            "burau_min_degree": min_degree,
             "confusion_score": round(float(confusion.item()), 6),
             "confidence_score": round(float(1.0 - confusion.item()), 6),
             "top_predictions": top_predictions,

@@ -34,6 +34,7 @@ class TrainConfig:
     grad_clip: float = 1.0
     out_dir: str = "artifacts"
     device: str = "auto"
+    use_min_degree: bool = True
 
 
 def set_seed(seed: int) -> None:
@@ -45,6 +46,7 @@ class BurauDataset(Dataset):
     """
     Expects JSON list records with:
       - burau_tensor: D x 3 x 3 ints in [0, p-1]
+      - burau_min_degree: optional integer projective shift (defaults to 0)
       - final_factor_perm: length-4 permutation
       - final_factor_right_descent: subset of [0,1,2]
     """
@@ -55,10 +57,12 @@ class BurauDataset(Dataset):
         self.p = p
 
         x = []
+        min_degrees = []
         y_perm = []
         y_desc = []
         for rec in records:
             tensor = rec["burau_tensor"]
+            min_degrees.append(int(rec.get("burau_min_degree", 0)))
             perm = tuple(rec["final_factor_perm"])
             rdesc = rec.get("final_factor_right_descent", [])
 
@@ -82,6 +86,7 @@ class BurauDataset(Dataset):
             raise ValueError(f"Input tensor values must be in [0, {p - 1}]")
 
         self.x = x_tensor
+        self.min_degrees = torch.tensor(min_degrees, dtype=torch.float32)
         self.y_perm = torch.tensor(y_perm, dtype=torch.long)
         self.y_desc = torch.tensor(y_desc, dtype=torch.float32)
         self.D = self.x.shape[1]
@@ -90,7 +95,7 @@ class BurauDataset(Dataset):
         return self.x.shape[0]
 
     def __getitem__(self, idx):
-        return self.x[idx], self.y_perm[idx], self.y_desc[idx]
+        return self.x[idx], self.min_degrees[idx], self.y_perm[idx], self.y_desc[idx]
 
 
 class ResidualMLPBlock(nn.Module):
@@ -124,11 +129,13 @@ class BurauEmbeddingMLP(nn.Module):
         blocks: int = 3,
         dropout: float = 0.1,
         use_aux_head: bool = True,
+        use_min_degree: bool = True,
     ):
         super().__init__()
         self.p = p
         self.D = D
         self.use_aux_head = use_aux_head
+        self.use_min_degree = use_min_degree
 
         self.value_emb = nn.Embedding(p, embed_dim)
         self.depth_emb = nn.Embedding(D, embed_dim)
@@ -142,6 +149,12 @@ class BurauEmbeddingMLP(nn.Module):
             nn.GELU(),
             nn.Dropout(dropout),
         )
+        if self.use_min_degree:
+            self.min_degree_proj = nn.Sequential(
+                nn.Linear(1, hidden_dim),
+                nn.GELU(),
+                nn.Dropout(dropout),
+            )
         self.blocks = nn.Sequential(
             *[ResidualMLPBlock(hidden_dim=hidden_dim, dropout=dropout) for _ in range(blocks)]
         )
@@ -156,7 +169,7 @@ class BurauEmbeddingMLP(nn.Module):
         self.register_buffer("row_idx", row_idx, persistent=False)
         self.register_buffer("col_idx", col_idx, persistent=False)
 
-    def forward(self, x):
+    def forward(self, x, min_degree=None):
         # x: [B, D, 3, 3] with integer values in [0, p-1]
         if x.shape[1] != self.D:
             raise ValueError(f"Model D={self.D}, got input depth {x.shape[1]}")
@@ -170,6 +183,11 @@ class BurauEmbeddingMLP(nn.Module):
         h = v + pos.unsqueeze(0)
         h = h.flatten(start_dim=1)
         h = self.input_proj(h)
+        if self.use_min_degree:
+            if min_degree is None:
+                raise ValueError("Model expects min_degree input")
+            min_degree = min_degree.to(dtype=torch.float32, device=x.device).view(-1, 1)
+            h = h + self.min_degree_proj(min_degree)
         h = self.blocks(h)
         h = self.trunk_norm(h)
 
@@ -270,12 +288,13 @@ def evaluate(model, loader, device, ce_loss, bce_loss, aux_weight, task):
     total_n = 0
     metric_name = None
     with torch.no_grad():
-        for x, y_perm, y_desc in loader:
+        for x, min_degree, y_perm, y_desc in loader:
             x = x.to(device, non_blocking=True)
+            min_degree = min_degree.to(device, non_blocking=True)
             y_perm = y_perm.to(device, non_blocking=True)
             y_desc = y_desc.to(device, non_blocking=True)
 
-            factor_logits, desc_logits = model(x)
+            factor_logits, desc_logits = model(x, min_degree=min_degree)
             loss, metric, metric_name = compute_task_loss_and_metric(
                 task=task,
                 factor_logits=factor_logits,
@@ -318,6 +337,7 @@ def train(config: TrainConfig):
         blocks=config.blocks,
         dropout=config.dropout,
         use_aux_head=(config.task != "final_factor"),
+        use_min_degree=config.use_min_degree,
     ).to(device)
 
     optimizer = torch.optim.AdamW(
@@ -351,14 +371,15 @@ def train(config: TrainConfig):
         running_n = 0
         metric_name = None
 
-        for x, y_perm, y_desc in train_loader:
+        for x, min_degree, y_perm, y_desc in train_loader:
             x = x.to(device, non_blocking=True)
+            min_degree = min_degree.to(device, non_blocking=True)
             y_perm = y_perm.to(device, non_blocking=True)
             y_desc = y_desc.to(device, non_blocking=True)
 
             optimizer.zero_grad(set_to_none=True)
             with torch.autocast(device_type=device.type, dtype=torch.float16, enabled=use_amp):
-                factor_logits, desc_logits = model(x)
+                factor_logits, desc_logits = model(x, min_degree=min_degree)
                 loss, metric, metric_name = compute_task_loss_and_metric(
                     task=config.task,
                     factor_logits=factor_logits,
@@ -396,11 +417,11 @@ def train(config: TrainConfig):
         if val_metric > best_val_metric:
             best_val_metric = val_metric
             torch.save(
-                {
-                    "model_state": model.state_dict(),
-                    "config": vars(config),
-                    "D": dataset.D,
-                    "p": config.p,
+        {
+            "model_state": model.state_dict(),
+            "config": vars(config),
+            "D": dataset.D,
+            "p": config.p,
                     "perm_classes": [list(p_) for p_ in PERMUTATIONS_S4],
                     "best_val_metric": best_val_metric,
                     "best_metric_name": metric_name,
@@ -445,6 +466,11 @@ def parse_args():
     parser.add_argument("--grad-clip", type=float, default=1.0)
     parser.add_argument("--out-dir", type=str, default="artifacts")
     parser.add_argument("--device", type=str, default="auto", help="auto, cuda, cpu, cuda:0, ...")
+    parser.add_argument(
+        "--no-min-degree",
+        action="store_true",
+        help="Disable the extra projective min-degree feature for compatibility experiments.",
+    )
     return parser.parse_args()
 
 
@@ -469,5 +495,6 @@ if __name__ == "__main__":
         grad_clip=args.grad_clip,
         out_dir=args.out_dir,
         device=args.device,
+        use_min_degree=not args.no_min_degree,
     )
     train(cfg)

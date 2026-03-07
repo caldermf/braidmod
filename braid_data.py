@@ -595,12 +595,23 @@ def burau_mod_p_polynomial_matrix(word, p, n=4):
     return result
 
 
-def burau_mod_p_tensor(word, p, D, n=4):
-    """
-    Convert Burau matrix to a degree-sliced tensor of shape D x 3 x 3 (for n=4).
+def _poly_matrix_degree_bounds(poly_mat):
+    exponents = []
+    for row in poly_mat:
+        for entry in row:
+            exponents.extend(entry.keys())
+    if not exponents:
+        return 0, 0
+    return min(exponents), max(exponents)
 
-    Exponent slice t stores coefficient of v^t modulo p.
-    Raises ValueError if any term has exponent < 0 or exponent >= D.
+
+def burau_mod_p_projective_tensor(word, p, D, n=4):
+    """
+    Convert Burau(word) to a projectively normalized tensor of shape D x 3 x 3.
+
+    The returned tensor stores coefficients after dividing by the smallest power
+    of v dividing the whole matrix, so the minimum occupied degree is always 0.
+    The second return value is that stripped global minimum degree.
     """
     if n != 4:
         raise ValueError("This tensor interface currently expects n=4 (3x3 matrices)")
@@ -608,18 +619,33 @@ def burau_mod_p_tensor(word, p, D, n=4):
         raise ValueError("D must be positive")
 
     poly_mat = burau_mod_p_polynomial_matrix(word, p, n=n)
+    min_exp, max_exp = _poly_matrix_degree_bounds(poly_mat)
+    width = max_exp - min_exp + 1
+    if width > D:
+        raise ValueError(
+            f"Tensor depth D={D} too small for projective support width {width} "
+            f"(degree range {min_exp}..{max_exp})"
+        )
     tensor = [[[0 for _ in range(3)] for _ in range(3)] for _ in range(D)]
 
     for i in range(3):
         for j in range(3):
             for exp, coeff in poly_mat[i][j].items():
-                if exp < 0 or exp >= D:
-                    raise ValueError(
-                        f"Tensor depth D={D} too small (or negative exponent present): "
-                        f"entry ({i},{j}) has term v^{exp}"
-                    )
-                tensor[exp][i][j] = coeff % p
+                shifted_exp = exp - min_exp
+                tensor[shifted_exp][i][j] = coeff % p
 
+    return tensor, min_exp
+
+
+def burau_mod_p_tensor(word, p, D, n=4):
+    """
+    Convert Burau(word) to a projectively normalized tensor of shape D x 3 x 3.
+
+    This returns only the normalized tensor for backward compatibility. Use
+    burau_mod_p_projective_tensor(...) when the stripped minimum degree is also
+    needed.
+    """
+    tensor, _ = burau_mod_p_projective_tensor(word, p, D, n=n)
     return tensor
 
 
@@ -648,13 +674,26 @@ def gnf_to_braid_word(gnf):
 
 def burau_mod_p_tensor_from_gnf(gnf, p, D):
     """
-    Evaluate p-Burau tensor (D x 3 x 3) for a GNF object in B_4.
+    Evaluate the projectively normalized p-Burau tensor (D x 3 x 3) for a GNF
+    object in B_4.
     """
     if not isinstance(gnf, GNF):
         raise TypeError("gnf must be an instance of GNF")
     if gnf.n != 4:
         raise ValueError("This tensor interface currently expects GNF in S_4")
     return burau_mod_p_tensor(gnf_to_braid_word(gnf), p, D, n=4)
+
+
+def burau_mod_p_projective_tensor_from_gnf(gnf, p, D):
+    """
+    Evaluate the projectively normalized p-Burau tensor and its minimum degree
+    for a GNF object in B_4.
+    """
+    if not isinstance(gnf, GNF):
+        raise TypeError("gnf must be an instance of GNF")
+    if gnf.n != 4:
+        raise ValueError("This tensor interface currently expects GNF in S_4")
+    return burau_mod_p_projective_tensor(gnf_to_braid_word(gnf), p, D, n=4)
 
 
 def burau_mod_p_matches_delta_power_scalar(word, p, n=4, delta_power=None):
@@ -749,8 +788,6 @@ class DataSetBuilder:
         d_min, d_max = d_range
         if d_min > d_max:
             raise ValueError("d_range must satisfy min <= max")
-        if d_min < 0:
-            raise ValueError("d_range min must be >= 0 for nonnegative tensor exponents")
 
         self.p = p
         self.D = D
@@ -823,12 +860,13 @@ class DataSetBuilder:
         Generate one training example.
         """
         gnf = self.random_gnf(L, max_attempts=max_attempts)
-        tensor = burau_mod_p_tensor_from_gnf(gnf, p=self.p, D=self.D)
+        tensor, min_degree = burau_mod_p_projective_tensor_from_gnf(gnf, p=self.p, D=self.D)
         final_factor = gnf.factors[-1]
         rdesc = sorted(final_factor.right_descent())
 
         return {
             "burau_tensor": tensor,
+            "burau_min_degree": min_degree,
             "final_factor_perm": list(final_factor.perm),
             "final_factor_right_descent": rdesc,
             "gnf_d": gnf.d,

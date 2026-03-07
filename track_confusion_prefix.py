@@ -6,7 +6,12 @@ from typing import List, Sequence, Tuple
 
 import torch
 
-from braid_data import GarsideFactor, GNF, burau_mod_p_polynomial_matrix, burau_mod_p_tensor
+from braid_data import (
+    GarsideFactor,
+    GNF,
+    burau_mod_p_polynomial_matrix,
+    burau_mod_p_projective_tensor,
+)
 from predict_garside_mlp import build_model, confusion_score_from_logits, resolve_device
 
 
@@ -74,19 +79,26 @@ def prefix_braid_word(d: int, factors: Sequence[Tuple[int, int, int, int]], k: i
 
 def tensor_with_optional_truncation(word: Sequence[int], p: int, depth: int, truncate_overflow: bool):
     if not truncate_overflow:
-        return burau_mod_p_tensor(word, p=p, D=depth, n=4), 0
+        tensor, min_degree = burau_mod_p_projective_tensor(word, p=p, D=depth, n=4)
+        return tensor, min_degree, 0
 
     poly_mat = burau_mod_p_polynomial_matrix(word, p=p, n=4)
+    all_exponents = []
+    for row in poly_mat:
+        for entry in row:
+            all_exponents.extend(entry.keys())
+    min_exp = min(all_exponents) if all_exponents else 0
     tensor = [[[0 for _ in range(3)] for _ in range(3)] for _ in range(depth)]
     overflow_terms = 0
     for i in range(3):
         for j in range(3):
             for exp, coeff in poly_mat[i][j].items():
-                if exp < 0 or exp >= depth:
+                shifted_exp = exp - min_exp
+                if shifted_exp < 0 or shifted_exp >= depth:
                     overflow_terms += 1
                     continue
-                tensor[exp][i][j] = coeff % p
-    return tensor, overflow_terms
+                tensor[shifted_exp][i][j] = coeff % p
+    return tensor, min_exp, overflow_terms
 
 
 def main():
@@ -129,12 +141,13 @@ def main():
     with torch.no_grad():
         for k in range(1, len(factors) + 1):
             word = prefix_braid_word(args.d, factors, k)
-            tensor, overflow_terms = tensor_with_optional_truncation(
+            tensor, min_degree, overflow_terms = tensor_with_optional_truncation(
                 word, p=p, depth=expected_d, truncate_overflow=args.truncate_overflow
             )
             x = torch.tensor(tensor, dtype=torch.long)
+            min_degree_tensor = torch.tensor([min_degree], dtype=torch.float32, device=device)
 
-            factor_logits, _ = model(x.unsqueeze(0).to(device))
+            factor_logits, _ = model(x.unsqueeze(0).to(device), min_degree=min_degree_tensor)
             confusion = confusion_score_from_logits(factor_logits)[0]
             probs = torch.softmax(factor_logits[0], dim=-1).cpu()
 
@@ -155,6 +168,7 @@ def main():
                     "factor_added": list(factors[k - 1]),
                     "confusion_score": round(float(confusion.item()), 6),
                     "confidence_score": round(float(1.0 - confusion.item()), 6),
+                    "burau_min_degree": int(min_degree),
                     "truncated_terms": int(overflow_terms),
                     "top_predictions": top_predictions,
                 }

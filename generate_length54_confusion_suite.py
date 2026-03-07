@@ -52,7 +52,8 @@ def sample_random_gnf_via_backtracking(builder: DataSetBuilder, length: int) -> 
 def emit_case(checkpoint: str, device: str, out_dir: Path, name: str, gnf_payload: dict, topk: int):
     gnf_path = out_dir / f"{name}_gnf.json"
     json_path = out_dir / f"{name}_confusion.json"
-    png_path = out_dir / f"{name}_confusion.png"
+    entropy_png_path = out_dir / f"{name}_entropy_confusion.png"
+    xent_png_path = out_dir / f"{name}_target_cross_entropy.png"
 
     write_json(gnf_path, gnf_payload)
     result = build_progression(
@@ -68,7 +69,21 @@ def emit_case(checkpoint: str, device: str, out_dir: Path, name: str, gnf_payloa
     if "artin_word" in gnf_payload:
         result["artin_word"] = gnf_payload["artin_word"]
     write_json(json_path, result)
-    save_plot(result["progression"], str(png_path), f"{name.replace('_', ' ').title()} Confusion")
+    title_base = name.replace("_", " ").title()
+    save_plot(
+        result["progression"],
+        str(entropy_png_path),
+        f"{title_base} Entropy Confusion",
+        metric_key="entropy_confusion_score",
+        y_label="Entropy Confusion",
+    )
+    save_plot(
+        result["progression"],
+        str(xent_png_path),
+        f"{title_base} Target Cross-Entropy",
+        metric_key="target_cross_entropy",
+        y_label="Target Cross-Entropy",
+    )
 
 
 def main():

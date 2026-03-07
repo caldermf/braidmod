@@ -5,7 +5,7 @@ import time
 from itertools import permutations
 from pathlib import Path
 
-from braid_data import GNF, GarsideFactor, burau_mod_p_tensor_from_gnf
+from braid_data import GNF, GarsideFactor, burau_mod_p_projective_tensor_from_gnf
 
 
 class FastGNFSampler:
@@ -15,8 +15,6 @@ class FastGNFSampler:
         d_min, d_max = d_range
         if d_min > d_max:
             raise ValueError("d_range must satisfy min <= max")
-        if d_min < 0:
-            raise ValueError("d_range min must be >= 0 for nonnegative tensor exponents")
 
         self.n = n
         self.d_range = (d_min, d_max)
@@ -114,7 +112,10 @@ def parse_args():
         "--D",
         type=int,
         default=None,
-        help="Tensor depth D for burau_tensor (shape D x 3 x 3). Defaults to 4*(length_max + d_max)+1.",
+        help=(
+            "Tensor depth D for the projectively normalized burau_tensor (shape D x 3 x 3). "
+            "Defaults to a conservative 4*(length_max + max(0, d_max))+1."
+        ),
     )
     parser.add_argument("--n", type=int, default=4, help="Braid index n (currently only n=4 is supported).")
     parser.add_argument("--d-min", type=int, default=0, help="Minimum Delta exponent d (inclusive).")
@@ -207,7 +208,7 @@ def main():
 
                 gnf = sampler.random_gnf(L)
                 try:
-                    tensor = burau_mod_p_tensor_from_gnf(gnf, p=args.p, D=tensor_depth)
+                    tensor, min_degree = burau_mod_p_projective_tensor_from_gnf(gnf, p=args.p, D=tensor_depth)
                     break
                 except ValueError as err:
                     msg = str(err)
@@ -221,6 +222,7 @@ def main():
             final_factor = gnf.factors[-1]
             rec = {
                 "burau_tensor": tensor,
+                "burau_min_degree": min_degree,
                 "final_factor_perm": list(final_factor.perm),
                 "final_factor_right_descent": sorted(final_factor.right_descent()),
                 "gnf_d": gnf.d,

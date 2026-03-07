@@ -15,7 +15,10 @@ Older datasets and artifacts generated before this correction are not compatible
 - `braid_data.py`: Garside-factor utilities, GNF validation, Burau polynomial/tensor evaluation, and random dataset generation.
 - `train_garside_mlp.py`: training entry point for `final_factor`, `right_descent`, or `multitask`.
 - `predict_garside_mlp.py`: inference CLI for trained checkpoints.
+- `reservoir_search_braidmod.py`: reservoir search over positive Garside words using projlen, model-based target cross-entropy, or frontier-distance multi-objective scoring.
 - `plot_training_curves.py`: plot loss and task metric from training logs.
+- `track_confusion_prefix.py`, `plot_prefix_confusion.py`, `generate_length54_confusion_suite.py`, `render_smoothed_xent_suite.py`: prefix-level confusion / target-xent analysis and rendering utilities.
+- `run_*.sh`: Slurm entrypoints for training, search, and rendering jobs on Bouchet.
 - `data/`: local JSON datasets.
 
 ## Environment
@@ -69,6 +72,30 @@ Run inference on a record from a dataset:
 ```
 
 Or pass a JSON file containing either `[D, 3, 3]` directly or `{"burau_tensor": ...}`.
+
+## Search
+
+`reservoir_search_braidmod.py` expands positive GNF words level by level, scores children, buckets them by score, keeps a uniform reservoir in each bucket, and advances the best survivors.
+
+Current score families:
+
+- `projlen`: minimize Burau projective support length only.
+- `target_xent_maximize`: maximize the model's normalized target cross-entropy using the built-in 5-step running average (`avg5`).
+- `frontier_target_xent`: combine normalized projlen with `avg5` target cross-entropy by measuring weighted distance to the levelwise Pareto frontier.
+
+The old hard-switch policy (`projlen` through some length, then pure target-xent) is still in the code for reproducibility, but it is no longer the recommended workflow. The current meaningful comparison is:
+
+- pure `projlen`
+- pure `target_xent_maximize` with `avg5`
+- `frontier_target_xent` with `avg5`
+
+Short comparison run:
+
+```bash
+sbatch run_frontier_target_xent_comparison_len40.sh
+```
+
+This launches three length-40 searches on `scavenge_gpu`, writes three JSON summaries under `artifacts/`, and renders a comparison plot of best projlen by level.
 
 ## Plot logs
 

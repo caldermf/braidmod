@@ -15,6 +15,15 @@ tmp_artifacts_identity_test/
 data/burau_gnf_L20_p5_D96_N100000.json
 data/burau_gnf_L15to40_p5_D96_N100000_corrected.json
 data/burau_gnf_L30to60_p5_D96_N200000_uniform.json
+data/burau_gnf_L30to60_p5_D96_N200000_uniform_corrected.json
+data/burau_gnf_L30to60_p5_D140_N200000_uniform.json
+data/burau_gnf_L30to60_p5_D140_N200000_uniform_corrected.json
+data/burau_gnf_L30to60_p5_D256_N200000_uniform_corrected.json
+data/burau_gnf_*_N100000*.json
+data/burau_gnf_*_N200000*.json
 data/burau_gnf_L20to50_p5_D256_N100000.json
 data/burau_gnf_L5to100_p7_D384_N200000.json
 data/*.json.tmp
+
+# python cache
+__pycache__/

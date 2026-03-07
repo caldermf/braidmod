@@ -6,10 +6,14 @@ from typing import List, Sequence, Tuple
 
 import matplotlib.pyplot as plt
 import torch
+import torch.nn.functional as F
 
 from braid_data import positive_word_to_garside_normal_form
-from predict_garside_mlp import build_model, confusion_score_from_logits, resolve_device
+from predict_garside_mlp import PERMUTATIONS_S4, build_model, confusion_score_from_logits, resolve_device
 from track_confusion_prefix import prefix_braid_word, tensor_with_optional_truncation
+
+
+PERM_TO_ID = {perm: idx for idx, perm in enumerate(PERMUTATIONS_S4)}
 
 
 def parse_artin_word(text: str) -> List[int]:
@@ -60,12 +64,16 @@ def build_progression(
     with torch.no_grad():
         for k in range(1, len(factors) + 1):
             word = prefix_braid_word(d, factors, k)
-            tensor, overflow_terms = tensor_with_optional_truncation(
+            tensor, min_degree, overflow_terms = tensor_with_optional_truncation(
                 word, p=p, depth=expected_d, truncate_overflow=truncate_overflow
             )
             x = torch.tensor(tensor, dtype=torch.long)
-            factor_logits, _ = model(x.unsqueeze(0).to(device))
-            confusion = confusion_score_from_logits(factor_logits)[0]
+            min_degree_tensor = torch.tensor([min_degree], dtype=torch.float32, device=device)
+            factor_logits, _ = model(x.unsqueeze(0).to(device), min_degree=min_degree_tensor)
+            entropy_confusion = confusion_score_from_logits(factor_logits)[0]
+            target_id = PERM_TO_ID[tuple(factors[k - 1])]
+            target_tensor = torch.tensor([target_id], dtype=torch.long, device=device)
+            target_cross_entropy = F.cross_entropy(factor_logits, target_tensor)
             probs = torch.softmax(factor_logits[0], dim=-1).cpu()
 
             top_probs, top_ids = torch.topk(probs, k=min(topk, probs.shape[0]))
@@ -73,8 +81,12 @@ def build_progression(
                 {
                     "prefix_len": k,
                     "factor_added": list(factors[k - 1]),
-                    "confusion_score": float(confusion.item()),
-                    "confidence_score": float(1.0 - confusion.item()),
+                    "confusion_score": float(entropy_confusion.item()),
+                    "entropy_confusion_score": float(entropy_confusion.item()),
+                    "confidence_score": float(1.0 - entropy_confusion.item()),
+                    "target_cross_entropy": float(target_cross_entropy.item()),
+                    "ground_truth_class_id": int(target_id),
+                    "burau_min_degree": int(min_degree),
                     "truncated_terms": int(overflow_terms),
                     "top_predictions": [
                         {
@@ -92,6 +104,11 @@ def build_progression(
         "device": str(device),
         "D": expected_d,
         "p": p,
+        "metrics": {
+            "confusion_score": "Normalized entropy of the factor logits",
+            "entropy_confusion_score": "Normalized entropy of the factor logits",
+            "target_cross_entropy": "Cross-entropy loss against the actual final factor of the current prefix",
+        },
         "d": d,
         "truncate_overflow": bool(truncate_overflow),
         "num_factors": len(factors),
@@ -100,17 +117,27 @@ def build_progression(
     }
 
 
-def save_plot(progression: Sequence[dict], out_path: str, title: str):
+def save_plot(
+    progression: Sequence[dict],
+    out_path: str,
+    title: str,
+    metric_key: str = "confusion_score",
+    y_label: str = "Confusion",
+):
     prefix_lens = [item["prefix_len"] for item in progression]
-    confusion = [item["confusion_score"] for item in progression]
+    metric_values = [item[metric_key] for item in progression]
 
     fig, ax = plt.subplots(figsize=(10, 5.5))
-    ax.plot(prefix_lens, confusion, marker="o", markersize=3, linewidth=1.8, color="#1f4e79")
+    ax.plot(prefix_lens, metric_values, marker="o", markersize=3, linewidth=1.8, color="#1f4e79")
     ax.set_xlabel("Garside Prefix Length")
-    ax.set_ylabel("Confusion")
+    ax.set_ylabel(y_label)
     ax.set_title(title)
     ax.set_xlim(1, max(prefix_lens))
-    ax.set_ylim(0.0, 1.0)
+    if metric_key in {"confusion_score", "entropy_confusion_score"}:
+        ax.set_ylim(0.0, 1.0)
+    else:
+        ymax = max(metric_values) if metric_values else 1.0
+        ax.set_ylim(0.0, max(1.0, 1.05 * ymax))
     ax.grid(True, alpha=0.3)
     fig.tight_layout()
     fig.savefig(out_path, dpi=180)
