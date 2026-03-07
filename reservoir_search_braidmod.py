@@ -48,7 +48,7 @@ class SearchConfig:
     projlen_weight: float
     confusion_weight: float
     topk_save: int
-    save_scalar_hits: int
+    save_kernel_hits: int
     out_json: Optional[str]
 
 
@@ -1056,7 +1056,7 @@ class ReservoirSearchBraidmod:
         if hit_indices.numel() == 0:
             return identity_count, delta_count
 
-        remaining_slots = self.config.save_scalar_hits - len(self.kernel_hits)
+        remaining_slots = self.config.save_kernel_hits - len(self.kernel_hits)
         if remaining_slots <= 0:
             return identity_count, delta_count
 
@@ -1336,9 +1336,11 @@ class ReservoirSearchBraidmod:
             "score_min": score_min,
             "score_mean": score_mean,
             "score_max": score_max,
-            "scalar_identity_hits": identity_hit_count,
-            "delta_kernel_hits": delta_hit_count,
-            "kernel_hits_total": identity_hit_count + delta_hit_count,
+            "kernel_hits_found": identity_hit_count + delta_hit_count,
+            "kernel_hit_type_counts": {
+                "identity": identity_hit_count,
+                "delta": delta_hit_count,
+            },
             "best_candidate": best_candidate,
             "timing_sec": {
                 "matmul": round(matmul_time, 4),
@@ -1391,8 +1393,10 @@ class ReservoirSearchBraidmod:
         best_candidates = [
             self._serialize_candidate(final_frontier, int(idx.item()), score_type=final_score_type) for idx in top_idx
         ]
-        scalar_identity_hits = [hit for hit in self.kernel_hits if hit["kernel_type"] == "identity"]
-        delta_power_hits = [hit for hit in self.kernel_hits if hit["kernel_type"] == "delta"]
+        kernel_hit_type_counts = {
+            "identity": sum(1 for hit in self.kernel_hits if hit["kernel_type"] == "identity"),
+            "delta": sum(1 for hit in self.kernel_hits if hit["kernel_type"] == "delta"),
+        }
         result = {
             "config": asdict(self.config),
             "device_resolved": str(self.device),
@@ -1400,8 +1404,7 @@ class ReservoirSearchBraidmod:
             "level_summaries": self.level_summaries,
             "best_candidates": best_candidates,
             "kernel_hits": self.kernel_hits,
-            "scalar_identity_hits": scalar_identity_hits,
-            "delta_kernel_hits": delta_power_hits,
+            "kernel_hit_type_counts": kernel_hit_type_counts,
             "total_time_sec": round(total_time, 4),
         }
         return result
@@ -1468,10 +1471,16 @@ def parse_args():
     parser.add_argument("--confusion-weight", type=float, default=1.0, help="Weight on model score for hybrid or frontier_target_xent scoring")
     parser.add_argument("--topk-save", type=int, default=50, help="How many best final candidates to save")
     parser.add_argument(
-        "--save-scalar-hits",
+        "--save-kernel-hits",
         type=int,
         default=100,
-        help="Maximum number of generalized kernel hits (identity or Delta) to keep in the JSON output",
+        help="Maximum number of kernel hits (identity or Delta power) to keep in the JSON output",
+    )
+    parser.add_argument(
+        "--save-scalar-hits",
+        dest="save_kernel_hits",
+        type=int,
+        help=argparse.SUPPRESS,
     )
     parser.add_argument("--out-json", help="Optional JSON path for the search result")
     return parser.parse_args()
@@ -1515,7 +1524,7 @@ def main():
         projlen_weight=args.projlen_weight,
         confusion_weight=args.confusion_weight,
         topk_save=args.topk_save,
-        save_scalar_hits=args.save_scalar_hits,
+        save_kernel_hits=args.save_kernel_hits,
         out_json=args.out_json,
     )
 
