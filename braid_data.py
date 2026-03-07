@@ -242,7 +242,10 @@ def _freeze_poly_matrix(poly_mat):
 
 def _burau_generator_matrix_exact(n, i, inverse=False):
     """
-    Reduced Burau matrix for sigma_i over Z[v, v^{-1}] using the repo convention.
+    Reduced Burau matrix for sigma_i over Z[v, v^{-1}] in the convention
+    sigma_1 -> [[-v^2, -v], [0, 1]]
+    sigma_{n-1} -> [[1, 0], [-v, -v^2]]
+    sigma_i -> [[1, 0, 0], [-v, -v^2, -v], [0, 0, 1]]
     """
     if n < 2:
         raise ValueError("Need n >= 2")
@@ -253,25 +256,25 @@ def _burau_generator_matrix_exact(n, i, inverse=False):
     mat = _poly_int_matrix_eye(m)
 
     one = _poly_int_const(1)
-    v = _poly_int_monomial(1, 1)
     minus_v = _poly_int_monomial(-1, 1)
-    v_inv = _poly_int_monomial(1, -1)
+    minus_v_sq = _poly_int_monomial(-1, 2)
     minus_v_inv = _poly_int_monomial(-1, -1)
+    minus_v_inv_sq = _poly_int_monomial(-1, -2)
 
     if i == 1:
         if not inverse:
-            mat[0][0] = minus_v
-            mat[0][1] = one
+            mat[0][0] = minus_v_sq
+            mat[0][1] = minus_v
         else:
-            mat[0][0] = minus_v_inv
-            mat[0][1] = v_inv
+            mat[0][0] = minus_v_inv_sq
+            mat[0][1] = minus_v_inv
     elif i == n - 1:
         if not inverse:
-            mat[m - 1][m - 2] = v
-            mat[m - 1][m - 1] = minus_v
+            mat[m - 1][m - 2] = minus_v
+            mat[m - 1][m - 1] = minus_v_sq
         else:
-            mat[m - 1][m - 2] = one
-            mat[m - 1][m - 1] = minus_v_inv
+            mat[m - 1][m - 2] = minus_v_inv
+            mat[m - 1][m - 1] = minus_v_inv_sq
     else:
         r0 = i - 2
         r1 = i - 1
@@ -280,13 +283,13 @@ def _burau_generator_matrix_exact(n, i, inverse=False):
         mat[r0][r1] = {}
         mat[r0][r2] = {}
         if not inverse:
-            mat[r1][r0] = v
-            mat[r1][r1] = minus_v
-            mat[r1][r2] = one
+            mat[r1][r0] = minus_v
+            mat[r1][r1] = minus_v_sq
+            mat[r1][r2] = minus_v
         else:
-            mat[r1][r0] = one
-            mat[r1][r1] = minus_v_inv
-            mat[r1][r2] = v_inv
+            mat[r1][r0] = minus_v_inv
+            mat[r1][r1] = minus_v_inv_sq
+            mat[r1][r2] = minus_v_inv
         mat[r2][r0] = {}
         mat[r2][r1] = {}
         mat[r2][r2] = one
@@ -507,7 +510,11 @@ def _poly_matrix_mul(a, b, p):
 
 def _burau_generator_matrix_poly(n, i, p, inverse=False):
     """
-    Reduced Burau matrix for sigma_i (1-based i) as polynomial entries in v.
+    Reduced Burau matrix for sigma_i (1-based i) as polynomial entries in v
+    in the convention
+    sigma_1 -> [[-v^2, -v], [0, 1]]
+    sigma_{n-1} -> [[1, 0], [-v, -v^2]]
+    sigma_i -> [[1, 0, 0], [-v, -v^2, -v], [0, 0, 1]]
     If inverse=True, returns sigma_i^{-1}, introducing negative exponents.
     """
     if n < 2:
@@ -519,28 +526,28 @@ def _burau_generator_matrix_poly(n, i, p, inverse=False):
     mat = _poly_matrix_eye(m, p)
 
     one = _poly_const(1, p)
-    v = _poly_monomial(1, 1, p)
     minus_v = _poly_monomial(-1, 1, p)
-    v_inv = _poly_monomial(1, -1, p)
+    minus_v_sq = _poly_monomial(-1, 2, p)
     minus_v_inv = _poly_monomial(-1, -1, p)
+    minus_v_inv_sq = _poly_monomial(-1, -2, p)
 
     # Convert generator index to reduced Burau matrix coordinates.
     # sigma_1 uses rows/cols 0..1, sigma_{n-1} uses m-2..m-1,
     # interior sigma_i uses block on (i-2, i-1, i) in 0-based coordinates.
     if i == 1:
         if not inverse:
-            mat[0][0] = minus_v
-            mat[0][1] = one
+            mat[0][0] = minus_v_sq
+            mat[0][1] = minus_v
         else:
-            mat[0][0] = minus_v_inv
-            mat[0][1] = v_inv
+            mat[0][0] = minus_v_inv_sq
+            mat[0][1] = minus_v_inv
     elif i == n - 1:
         if not inverse:
-            mat[m - 1][m - 2] = v
-            mat[m - 1][m - 1] = minus_v
+            mat[m - 1][m - 2] = minus_v
+            mat[m - 1][m - 1] = minus_v_sq
         else:
-            mat[m - 1][m - 2] = one
-            mat[m - 1][m - 1] = minus_v_inv
+            mat[m - 1][m - 2] = minus_v_inv
+            mat[m - 1][m - 1] = minus_v_inv_sq
     else:
         r0 = i - 2
         r1 = i - 1
@@ -549,13 +556,13 @@ def _burau_generator_matrix_poly(n, i, p, inverse=False):
         mat[r0][r1] = {}
         mat[r0][r2] = {}
         if not inverse:
-            mat[r1][r0] = v
-            mat[r1][r1] = minus_v
-            mat[r1][r2] = one
+            mat[r1][r0] = minus_v
+            mat[r1][r1] = minus_v_sq
+            mat[r1][r2] = minus_v
         else:
-            mat[r1][r0] = one
-            mat[r1][r1] = minus_v_inv
-            mat[r1][r2] = v_inv
+            mat[r1][r0] = minus_v_inv
+            mat[r1][r1] = minus_v_inv_sq
+            mat[r1][r2] = minus_v_inv
         mat[r2][r0] = {}
         mat[r2][r1] = {}
         mat[r2][r2] = one

@@ -2,6 +2,14 @@
 
 Small research repo for generating Burau-mod-p braid data in `B_4` and training an MLP to predict the final Garside factor or its right descent set.
 
+The code now uses the reduced Burau normalization
+`sigma_1 -> [[-v^2, -v], [0, 1]]`,
+`sigma_{n-1} -> [[1, 0], [-v, -v^2]]`,
+and
+`sigma_i -> [[1, 0, 0], [-v, -v^2, -v], [0, 0, 1]]`
+for `1 < i < n - 1`.
+Older datasets and artifacts generated before this correction are not compatible with the current code unless they are regenerated.
+
 ## What's here
 
 - `braid_data.py`: Garside-factor utilities, GNF validation, Burau polynomial/tensor evaluation, and random dataset generation.

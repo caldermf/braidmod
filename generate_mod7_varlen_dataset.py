@@ -103,14 +103,19 @@ def parse_args():
     parser.add_argument(
         "--output-path",
         type=str,
-        default="data/burau_gnf_L5to100_p7_D192_N200000.json",
-        help="Path to output JSON dataset file.",
+        default=None,
+        help="Path to output JSON dataset file. Defaults to a name derived from the resolved tensor depth D.",
     )
     parser.add_argument("--num-samples", type=int, default=200000, help="Number of records to generate.")
     parser.add_argument("--length-min", type=int, default=5, help="Minimum Garside length (inclusive).")
     parser.add_argument("--length-max", type=int, default=100, help="Maximum Garside length (inclusive).")
     parser.add_argument("--p", type=int, default=7, help="Modulus p for Burau tensor entries.")
-    parser.add_argument("--D", type=int, default=384, help="Tensor depth D for burau_tensor (shape D x 3 x 3).")
+    parser.add_argument(
+        "--D",
+        type=int,
+        default=None,
+        help="Tensor depth D for burau_tensor (shape D x 3 x 3). Defaults to 4*(length_max + d_max)+1.",
+    )
     parser.add_argument("--n", type=int, default=4, help="Braid index n (currently only n=4 is supported).")
     parser.add_argument("--d-min", type=int, default=0, help="Minimum Delta exponent d (inclusive).")
     parser.add_argument("--d-max", type=int, default=0, help="Maximum Delta exponent d (inclusive).")
@@ -149,7 +154,14 @@ def main():
     if args.heartbeat_secs <= 0:
         raise ValueError("--heartbeat-secs must be positive")
 
-    out_path = Path(args.output_path)
+    tensor_depth = args.D if args.D is not None else 4 * (args.length_max + max(0, args.d_max)) + 1
+    output_path = args.output_path
+    if output_path is None:
+        output_path = (
+            f"data/burau_gnf_L{args.length_min}to{args.length_max}_p{args.p}_D{tensor_depth}_N{args.num_samples}.json"
+        )
+
+    out_path = Path(output_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
     sampler = FastGNFSampler(n=args.n, d_range=(args.d_min, args.d_max), seed=args.seed)
@@ -195,7 +207,7 @@ def main():
 
                 gnf = sampler.random_gnf(L)
                 try:
-                    tensor = burau_mod_p_tensor_from_gnf(gnf, p=args.p, D=args.D)
+                    tensor = burau_mod_p_tensor_from_gnf(gnf, p=args.p, D=tensor_depth)
                     break
                 except ValueError as err:
                     msg = str(err)
