@@ -49,6 +49,8 @@ class SearchConfig:
     confusion_weight: float
     topk_save: int
     save_kernel_hits: int
+    xent_prune_levels: Tuple[int, ...]
+    xent_prune_threshold: Optional[float]
     out_json: Optional[str]
 
 
@@ -436,12 +438,14 @@ class ModelConfusionScoreFunction(BaseScoreFunction):
         score_chunk_size: int,
         expected_p: int,
         metric_type: str = "entropy",
+        normalize_target_xent: bool = True,
     ):
         super().__init__(device)
         self.score_chunk_size = score_chunk_size
         if metric_type not in ("entropy", "target_xent"):
             raise ValueError("metric_type must be 'entropy' or 'target_xent'")
         self.metric_type = metric_type
+        self.normalize_target_xent = bool(normalize_target_xent)
         checkpoint = torch.load(checkpoint_path, map_location=device)
         checkpoint_p = int(checkpoint["p"])
         if checkpoint_p != int(expected_p):
@@ -492,7 +496,10 @@ class ModelConfusionScoreFunction(BaseScoreFunction):
                 else:
                     chunk_targets = chunk_targets.to(dtype=torch.long, device=self.device)
                     xent = F.cross_entropy(factor_logits, chunk_targets, reduction="none")
-                    out[start:end] = (xent / xent_norm).to(SCORE_DTYPE)
+                    if self.normalize_target_xent:
+                        out[start:end] = (xent / xent_norm).to(SCORE_DTYPE)
+                    else:
+                        out[start:end] = xent.to(SCORE_DTYPE)
         return ScoreBatch(raw_scores=out, bucket_scores=out)
 
 
@@ -799,6 +806,7 @@ class ReservoirSearchBraidmod:
         self.scorer = self._build_scorer()
         self.projlen_scorer: Optional[ProjlenScoreFunction] = None
         self.target_xent_scorer: Optional[ModelConfusionScoreFunction] = None
+        self.prune_xent_scorer: Optional[ModelConfusionScoreFunction] = None
         if is_switching_score_type(config.score_type) or is_frontier_score_type(config.score_type):
             self.projlen_scorer = ProjlenScoreFunction(
                 device=self.device,
@@ -813,6 +821,19 @@ class ReservoirSearchBraidmod:
                 score_chunk_size=self.config.score_chunk_size,
                 expected_p=self.config.p,
                 metric_type="target_xent",
+            )
+        if self.config.xent_prune_levels:
+            if self.config.score_type != "projlen":
+                raise ValueError("xent-prune checkpoints are currently supported only with --score-type=projlen")
+            if not self.config.checkpoint:
+                raise ValueError("--checkpoint is required when xent-prune checkpoints are enabled")
+            self.prune_xent_scorer = ModelConfusionScoreFunction(
+                checkpoint_path=self.config.checkpoint,
+                device=self.device,
+                score_chunk_size=self.config.score_chunk_size,
+                expected_p=self.config.p,
+                metric_type="target_xent",
+                normalize_target_xent=False,
             )
         self.frontier = _build_initial_frontier(config, self.device)
         self.level_summaries: List[dict] = []
@@ -924,6 +945,38 @@ class ReservoirSearchBraidmod:
                 return "projlen"
             return "target_xent_maximize"
         return self.config.score_type
+
+    def _should_apply_xent_prune(self, level: int) -> bool:
+        return bool(self.config.xent_prune_levels) and level in self.config.xent_prune_levels
+
+    def _apply_xent_prune(self, frontier: FrontierBatch, level: int) -> Tuple[FrontierBatch, Optional[dict]]:
+        if not self._should_apply_xent_prune(level):
+            return frontier, None
+        if frontier.xent_max is None:
+            raise RuntimeError("xent-prune checkpoints require xent_max state")
+        if self.config.xent_prune_threshold is None:
+            raise RuntimeError("xent-prune checkpoints require a threshold")
+
+        keep_mask = frontier.xent_max >= float(self.config.xent_prune_threshold)
+        kept = int(keep_mask.sum().item())
+        discarded = frontier.size - kept
+        pruned = FrontierBatch(
+            tensors=frontier.tensors[keep_mask],
+            min_degrees=frontier.min_degrees[keep_mask],
+            words=frontier.words[keep_mask],
+            lengths=frontier.lengths[keep_mask],
+            last_factor_ids=frontier.last_factor_ids[keep_mask],
+            xent_history=frontier.xent_history[keep_mask] if frontier.xent_history is not None else None,
+            xent_max=torch.zeros(kept, dtype=SCORE_DTYPE, device=frontier.tensors.device),
+            scores=frontier.scores[keep_mask] if frontier.scores is not None else None,
+            bucket_ids=frontier.bucket_ids[keep_mask] if frontier.bucket_ids is not None else None,
+        )
+        return pruned, {
+            "level": level,
+            "threshold": float(self.config.xent_prune_threshold),
+            "discarded": discarded,
+            "kept": kept,
+        }
 
     def _build_frontier_target_xent_level(
         self,
@@ -1275,6 +1328,17 @@ class ReservoirSearchBraidmod:
                 elif self.config.score_type == "target_xent_max_maximize":
                     child_xent_max = torch.maximum(parent_xent_max.to(SCORE_DTYPE), score_batch.raw_scores.to(SCORE_DTYPE))
                     score_batch = maximize_score_transform(child_xent_max)
+            if self.prune_xent_scorer is not None:
+                prune_xent_score_batch = self.prune_xent_scorer.score_batch(
+                    child_tensors,
+                    min_degrees=child_min_degrees,
+                    lengths=child_lengths,
+                    target_factor_ids=child_last,
+                )
+                child_xent_max = torch.maximum(
+                    parent_xent_max.to(SCORE_DTYPE),
+                    prune_xent_score_batch.raw_scores.to(SCORE_DTYPE),
+                )
             bucket_ids = bucketizer.bucketize(score_batch.bucket_scores, self.config.num_buckets)
             score_time += time.time() - t0
 
@@ -1334,19 +1398,23 @@ class ReservoirSearchBraidmod:
             bucket_time += time.time() - t0
 
         materialized = buckets.materialize(out_device=torch.device("cpu"))
-        selected = materialized if is_bootstrap else self._select_best(materialized)
+        pruned_materialized, prune_summary = self._apply_xent_prune(materialized, level)
+        selected = pruned_materialized if is_bootstrap else self._select_best(pruned_materialized)
         next_frontier = _move_frontier_batch(selected, self.device)
         level_time = time.time() - level_start
 
         score_mean = score_sum / float(num_candidates)
-        best_idx = int(torch.argmin(materialized.scores).item())
-        best_candidate = self._serialize_candidate(materialized, best_idx, score_type=active_score_type)
+        best_candidate = None
+        if pruned_materialized.size > 0:
+            best_idx = int(torch.argmin(pruned_materialized.scores).item())
+            best_candidate = self._serialize_candidate(pruned_materialized, best_idx, score_type=active_score_type)
 
         summary = {
             "level": level,
             "num_parents": self.frontier.size,
             "num_candidates": num_candidates,
             "num_kept_after_reservoir": materialized.size,
+            "num_kept_after_xent_prune": pruned_materialized.size,
             "num_selected_for_next_level": selected.size,
             "nonempty_buckets": len(buckets.data),
             "incoming_bucket_counts": incoming_bucket_counts,
@@ -1370,24 +1438,36 @@ class ReservoirSearchBraidmod:
         }
         if frontier_summary is not None:
             summary["frontier_points"] = frontier_summary
+        if prune_summary is not None:
+            summary["xent_prune"] = prune_summary
         self.level_summaries.append(summary)
         self.frontier = next_frontier
 
+        prune_text = ""
+        if prune_summary is not None:
+            prune_text = (
+                f" xent_prune(discarded={prune_summary['discarded']} kept={prune_summary['kept']} "
+                f"threshold={prune_summary['threshold']:.4f})"
+            )
         print(
-            f"  kept={materialized.size} selected={selected.size} buckets={len(buckets.data)} "
+            f"  kept={materialized.size} post_prune={pruned_materialized.size} selected={selected.size} "
+            f"buckets={len(buckets.data)} "
             f"score=[{score_min:.4f}, {score_mean:.4f}, {score_max:.4f}] "
             f"kernel_hits={identity_hit_count + delta_hit_count} "
-            f"(identity={identity_hit_count} delta={delta_hit_count})"
+            f"(identity={identity_hit_count} delta={delta_hit_count}){prune_text}"
         )
         print(
             f"  timing: matmul={matmul_time:.2f}s frontier={frontier_time:.2f}s score={score_time:.2f}s "
             f"reservoir={bucket_time:.2f}s total={level_time:.2f}s"
         )
-        print(
-            f"  best score={best_candidate['score']:.6f} "
-            f"last_factor={best_candidate['gnf_factors'][-1]}"
-        )
-        return True
+        if best_candidate is not None:
+            print(
+                f"  best score={best_candidate['score']:.6f} "
+                f"last_factor={best_candidate['gnf_factors'][-1]}"
+            )
+        else:
+            print("  no survivors remain after xent prune")
+        return pruned_materialized.size > 0
 
     def run(self) -> dict:
         total_start = time.time()
@@ -1489,6 +1569,16 @@ def parse_args():
     parser.add_argument("--confusion-weight", type=float, default=1.0, help="Weight on model score for hybrid or frontier_target_xent scoring")
     parser.add_argument("--topk-save", type=int, default=50, help="How many best final candidates to save")
     parser.add_argument(
+        "--xent-prune-levels",
+        default="",
+        help="Comma-separated levels where survivors with insufficient window max target xent are discarded and reset",
+    )
+    parser.add_argument(
+        "--xent-prune-threshold",
+        type=float,
+        help="Raw target-cross-entropy threshold required at each xent-prune checkpoint",
+    )
+    parser.add_argument(
         "--save-kernel-hits",
         type=int,
         default=100,
@@ -1522,6 +1612,19 @@ def main():
     if args.score_switch_length < 0:
         raise ValueError("--score-switch-length must be non-negative")
 
+    prune_levels = tuple(int(part) for part in args.xent_prune_levels.split(",") if part.strip())
+    if prune_levels:
+        if args.xent_prune_threshold is None:
+            raise ValueError("--xent-prune-threshold is required when --xent-prune-levels is set")
+        if any(level <= 0 for level in prune_levels):
+            raise ValueError("--xent-prune-levels must all be positive")
+        if sorted(prune_levels) != list(prune_levels):
+            raise ValueError("--xent-prune-levels must be in increasing order")
+        if len(set(prune_levels)) != len(prune_levels):
+            raise ValueError("--xent-prune-levels must not repeat levels")
+        if prune_levels[-1] > args.max_length:
+            raise ValueError("--xent-prune-levels cannot exceed --max-length")
+
     search_D = args.search_D if args.search_D is not None else 4 * args.max_length + 1
     config = SearchConfig(
         p=args.p,
@@ -1543,6 +1646,8 @@ def main():
         confusion_weight=args.confusion_weight,
         topk_save=args.topk_save,
         save_kernel_hits=args.save_kernel_hits,
+        xent_prune_levels=prune_levels,
+        xent_prune_threshold=args.xent_prune_threshold,
         out_json=args.out_json,
     )
 
