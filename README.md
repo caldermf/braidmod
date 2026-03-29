@@ -1,6 +1,6 @@
 # braidmod
 
-`braidmod` is a public research repo about the four-strand Burau faithfulness
+`braidmod` is a repo about the four-strand Burau faithfulness
 problem and a new machine-learning strategy for attacking it in characteristic
 `p`.
 
@@ -37,7 +37,7 @@ Modulo primes, the four-strand problem has its own life:
   a kernel exhibited modulo `3`
 - Gibson, Williamson, and Yacobi later proved that four-strand Burau is
   unfaithful modulo `5`
-- at the time of writing, and to our knowledge, no kernel elements are known
+- at the time of writing, no kernel elements are known
   modulo primes `p >= 7`
 
 So characteristic `p` is not merely a toy shadow of the classical problem. It is
@@ -76,9 +76,9 @@ polynomial matrix.
 
 This repository is a new step in that program.
 
-To our knowledge, it is the first attempt to combine the model-confusion idea
+Here, we combine the model-confusion idea
 with the characteristic-`p` Burau problem while feeding the model the **entire**
-polynomial Burau tensor.
+polynomial Burau matrix.
 
 More specifically, this repo changes three things at once:
 
@@ -88,13 +88,13 @@ More specifically, this repo changes three things at once:
 - it moves from predicting only a descent set to predicting the **actual final
   Garside factor**
 
-That last change matters. The final Garside factor is a richer target than its
+The final Garside factor is a richer target than its
 descent set: the descent set is a coarse shadow of the factor, while the factor
 itself is a `24`-class object in type `A_3`.
 
 ## What this repo shows
 
-This repository is built around one claim: a model can learn honest algebraic
+Our experiments suggest that a model can learn honest algebraic
 structure from Burau matrices in characteristic `p`, and its uncertainty on
 prefixes can then be reused as a kernel-search signal.
 
@@ -107,9 +107,8 @@ Concretely:
 - the improved model still fails in a structured way on known kernel elements,
   and that failure is visible in the confusion-score plots
 
-That is the conceptual point of the project. We are not training a kernel
-classifier. We are training a structural predictor and then using its surprise as
-the downstream mathematical signal.
+That is the conceptual point of the project. Following the (brilliant!) idea of Charton, Narayanan, Williamson, and Yacobi, we are training a structural predictor and then using its surprise (or "confusion") as
+the downstream mathematical signal in our kernel search.
 
 ## Results
 
@@ -119,14 +118,13 @@ the downstream mathematical signal.
 | Transformer validation loss | `0.2178` |
 | Transformer validation factor accuracy | `0.9388` |
 
-The comparison to the earlier neural line is the motivating story here. The
-specialized-value descent-set experiments were already strong enough to make
+The specialized-value descent-set experiments were already strong enough to make
 model confusion interesting, with accuracy in roughly the `80%` range on that
-coarser task. Here the best public transformer reaches `93.88%` validation
+coarser task. Here our best transformer reaches `93.88%` validation
 accuracy on the finer `24`-class final-factor problem while operating directly on
 the full characteristic-`p` polynomial tensor.
 
-Just as importantly, the best public model is not merely a cleaner fit to the
+Just as importantly, this transformer is not only a cleaner fit to the
 supervised task. It also preserves the qualitative behavior we want on saved
 kernel examples:
 
@@ -134,10 +132,9 @@ kernel examples:
   windows `7`, `10`, `15`, and `20`
 - the individual kernel-hit trajectories remain visibly elevated, so the effect is
   not created by averaging alone
-- the saved GWY kernel element shows the same pattern most clearly in target
-  cross-entropy
+- the known mod 5 kernel element found by Gibson, Williamson, Yacobi (we call it the GWY element) shows the same pattern most clearly in cross-entropy with the target prediction
 
-The three figures that summarize the repo best are:
+Here are three figures summarizing the repo:
 
 - [figures/mlp_and_transformer_training_curves.png](figures/mlp_and_transformer_training_curves.png)
 - [figures/known_kernel_elements_vs_random_target_cross_entropy_running_average_15_steps.png](figures/known_kernel_elements_vs_random_target_cross_entropy_running_average_15_steps.png)
@@ -152,8 +149,7 @@ known kernel elements to aim at.
 The confusion-score evolution plots in this repo are evidence that the idea is
 not confined to characteristic zero. Even in characteristic `p`, a model trained
 only on ordinary Garside data assigns systematically higher surprise to known
-kernel prefixes than to random controls. That is exactly the kind of signal one
-would want inside a reservoir-sampling search:
+kernel prefixes than to random controls. That's the kind of information we want to include inside a reservoir-sampling search:
 
 - score prefixes by how atypical they look to the model
 - keep only a small weighted reservoir of promising candidates
