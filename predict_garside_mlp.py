@@ -6,7 +6,7 @@ from pathlib import Path
 
 import torch
 
-from train_garside_mlp import BurauEmbeddingMLP, PERMUTATIONS_S4
+from garside_models import PERMUTATIONS_S4, build_model_from_config
 
 
 def resolve_device(device_arg: str) -> torch.device:
@@ -30,6 +30,10 @@ def load_tensor(args, expected_d: int):
             raise ValueError("Selected record does not contain 'burau_tensor'")
         tensor = records[args.index]["burau_tensor"]
         min_degree = int(records[args.index].get("burau_min_degree", 0))
+        if "gnf_factors" in records[args.index]:
+            garside_length = len(records[args.index]["gnf_factors"])
+        else:
+            garside_length = int(records[args.index].get("garside_length", records[args.index].get("gnf_length", 0)))
     else:
         payload = json.loads(Path(args.tensor_path).read_text(encoding="utf-8"))
         if isinstance(payload, dict):
@@ -37,36 +41,31 @@ def load_tensor(args, expected_d: int):
                 raise ValueError("Tensor JSON dict must contain key 'burau_tensor'")
             tensor = payload["burau_tensor"]
             min_degree = int(payload.get("burau_min_degree", 0))
+            if "gnf_factors" in payload:
+                garside_length = len(payload["gnf_factors"])
+            else:
+                garside_length = int(payload.get("garside_length", payload.get("gnf_length", 0)))
         else:
             tensor = payload
             min_degree = 0
+            garside_length = 0
 
     x = torch.tensor(tensor, dtype=torch.long)
     if x.ndim != 3 or tuple(x.shape[1:]) != (3, 3):
         raise ValueError(f"Expected tensor shape [D, 3, 3], got {tuple(x.shape)}")
     if x.shape[0] != expected_d:
         raise ValueError(f"Checkpoint expects D={expected_d}, got D={x.shape[0]}")
-    return x, min_degree
+    if args.garside_length is not None:
+        garside_length = int(args.garside_length)
+    return x, min_degree, garside_length
 
 
 def build_model(checkpoint: dict, device: torch.device):
     config = checkpoint.get("config", {})
     p = int(checkpoint["p"])
     d = int(checkpoint["D"])
-    use_aux_head = config.get("use_aux_head")
-    if use_aux_head is None:
-        use_aux_head = config.get("task", "multitask") != "final_factor"
-    use_min_degree = bool(config.get("use_min_degree", False))
-    model = BurauEmbeddingMLP(
-        p=p,
-        D=d,
-        embed_dim=int(config.get("embed_dim", 32)),
-        hidden_dim=int(config.get("hidden_dim", 1024)),
-        blocks=int(config.get("blocks", 3)),
-        dropout=float(config.get("dropout", 0.1)),
-        use_aux_head=bool(use_aux_head),
-        use_min_degree=use_min_degree,
-    ).to(device)
+    matrix_size = int(checkpoint.get("matrix_size", config.get("matrix_size", 3)))
+    model = build_model_from_config(config, p=p, D=d, matrix_size=matrix_size).to(device)
     state = checkpoint.get("model_state")
     if state is None:
         raise ValueError("Checkpoint missing 'model_state'")
@@ -96,7 +95,7 @@ def confusion_score_from_logits(logits: torch.Tensor) -> torch.Tensor:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Run inference with a trained Garside MLP checkpoint.")
+    parser = argparse.ArgumentParser(description="Run inference with a trained Garside model checkpoint.")
     parser.add_argument("--checkpoint", required=True, help="Path to best_model.pt")
     parser.add_argument("--device", default="auto", help="auto, cuda, cpu, cuda:0, ...")
     parser.add_argument("--topk", type=int, default=5, help="Number of top permutation predictions to show")
@@ -104,6 +103,7 @@ def main():
     parser.add_argument("--dataset-path", help="Dataset JSON path; uses --index record")
     parser.add_argument("--index", type=int, default=0, help="Record index when using --dataset-path")
     parser.add_argument("--tensor-path", help="JSON file containing a [D,3,3] tensor or {\"burau_tensor\": ...}")
+    parser.add_argument("--garside-length", type=int, help="Optional override for the Garside length input")
     args = parser.parse_args()
 
     if bool(args.dataset_path) == bool(args.tensor_path):
@@ -112,16 +112,27 @@ def main():
     device = resolve_device(args.device)
     checkpoint = torch.load(args.checkpoint, map_location=device)
     model = build_model(checkpoint, device)
+    config = checkpoint.get("config", {})
 
     expected_d = int(checkpoint["D"])
     p = int(checkpoint["p"])
-    x, min_degree = load_tensor(args, expected_d=expected_d)
+    x, min_degree, garside_length = load_tensor(args, expected_d=expected_d)
     if x.min().item() < 0 or x.max().item() >= p:
         raise ValueError(f"Input values must be in [0, {p - 1}]")
+    if bool(config.get("use_garside_length", False)) and garside_length <= 0:
+        raise ValueError(
+            "Checkpoint expects a positive Garside length input; provide a dataset record with "
+            "'gnf_factors'/'garside_length' or pass --garside-length."
+        )
 
     with torch.no_grad():
         min_degree_tensor = torch.tensor([min_degree], dtype=torch.float32, device=device)
-        factor_logits, desc_logits = model(x.unsqueeze(0).to(device), min_degree=min_degree_tensor)
+        garside_length_tensor = torch.tensor([garside_length], dtype=torch.float32, device=device)
+        factor_logits, desc_logits = model(
+            x.unsqueeze(0).to(device),
+            min_degree=min_degree_tensor,
+            garside_length=garside_length_tensor,
+        )
         confusion = confusion_score_from_logits(factor_logits)[0]
         probs = torch.softmax(factor_logits[0], dim=-1).cpu()
         topk = min(args.topk, probs.shape[0])
@@ -147,6 +158,7 @@ def main():
             "D": expected_d,
             "p": p,
             "burau_min_degree": min_degree,
+            "garside_length": garside_length,
             "confusion_score": round(float(confusion.item()), 6),
             "confidence_score": round(float(1.0 - confusion.item()), 6),
             "top_predictions": top_predictions,

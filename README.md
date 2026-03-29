@@ -1,6 +1,6 @@
 # braidmod
 
-Small research repo for generating Burau-mod-p braid data in `B_4` and training an MLP to predict the final Garside factor or its right descent set.
+Small research repo for generating Burau-mod-p braid data in `B_4` and training either an MLP or a hierarchical transformer to predict the final Garside factor or its right descent set.
 
 The code now uses the reduced Burau normalization
 `sigma_1 -> [[-v^2, -v], [0, 1]]`,
@@ -13,7 +13,8 @@ Older datasets and artifacts generated before this correction are not compatible
 ## What's here
 
 - `braid_data.py`: Garside-factor utilities, GNF validation, Burau polynomial/tensor evaluation, and random dataset generation.
-- `train_garside_mlp.py`: training entry point for `final_factor`, `right_descent`, or `multitask`.
+- `train_garside_mlp.py`: training entry point for `final_factor`, `right_descent`, or `multitask` with either `--model-type mlp` or `--model-type transformer`.
+- `garside_models.py`: shared MLP / transformer definitions plus checkpoint-aware model factory.
 - `predict_garside_mlp.py`: inference CLI for trained checkpoints.
 - `reservoir_search_braidmod.py`: reservoir search over positive Garside words using projlen, model-based target cross-entropy, or frontier-distance multi-objective scoring.
 - `plot_training_curves.py`: plot loss and task metric from training logs.
@@ -58,7 +59,27 @@ Tasks:
 - `right_descent`: predict the right descent set only
 - `multitask`: predict the final factor with an auxiliary right-descent loss
 
+Train the hierarchical transformer from `SPEC.md` with:
+
+```bash
+.venv/bin/python train_garside_mlp.py \
+  --data-path data/burau_gnf_L30to60_p5_D140_N200000_uniform.json \
+  --p 5 \
+  --model-type transformer \
+  --task multitask \
+  --batch-size 256 \
+  --epochs 20 \
+  --d-model 256 \
+  --ffn-mult 4 \
+  --num-local-blocks 2 \
+  --num-local-heads 4 \
+  --num-global-blocks 6 \
+  --num-global-heads 8 \
+  --out-dir artifacts/garside_transformer
+```
+
 Checkpoints include `p` and `D`; inference inputs must match both.
+`predict_garside_mlp.py` and the search/confusion tooling reconstruct either architecture from the saved checkpoint config.
 
 ## Predict
 

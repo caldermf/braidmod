@@ -462,7 +462,6 @@ class ModelConfusionScoreFunction(BaseScoreFunction):
         lengths: Optional[torch.Tensor] = None,
         target_factor_ids: Optional[torch.Tensor] = None,
     ) -> ScoreBatch:
-        del lengths
         if self.metric_type == "target_xent" and target_factor_ids is None:
             raise ValueError("target_factor_ids are required for target_xent scoring")
         out = torch.empty(tensors.shape[0], dtype=SCORE_DTYPE, device=self.device)
@@ -473,6 +472,7 @@ class ModelConfusionScoreFunction(BaseScoreFunction):
                 end = min(start + self.score_chunk_size, tensors.shape[0])
                 chunk = tensors[start:end]
                 chunk_min_degrees = None if min_degrees is None else min_degrees[start:end]
+                chunk_lengths = None if lengths is None else lengths[start:end]
                 chunk_targets = None if target_factor_ids is None else target_factor_ids[start:end]
                 if chunk.shape[1] >= self.model_D:
                     x = chunk[:, : self.model_D].to(dtype=torch.long)
@@ -490,7 +490,15 @@ class ModelConfusionScoreFunction(BaseScoreFunction):
                     chunk_min_degrees = torch.zeros(chunk.shape[0], dtype=torch.float32, device=self.device)
                 else:
                     chunk_min_degrees = chunk_min_degrees.to(dtype=torch.float32, device=self.device)
-                factor_logits, _ = self.model(x, min_degree=chunk_min_degrees)
+                if chunk_lengths is None:
+                    chunk_lengths = torch.zeros(chunk.shape[0], dtype=torch.float32, device=self.device)
+                else:
+                    chunk_lengths = chunk_lengths.to(dtype=torch.float32, device=self.device)
+                factor_logits, _ = self.model(
+                    x,
+                    min_degree=chunk_min_degrees,
+                    garside_length=chunk_lengths,
+                )
                 if self.metric_type == "entropy":
                     out[start:end] = confusion_score_from_logits(factor_logits).to(SCORE_DTYPE)
                 else:

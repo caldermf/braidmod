@@ -146,8 +146,13 @@ def main():
             )
             x = torch.tensor(tensor, dtype=torch.long)
             min_degree_tensor = torch.tensor([min_degree], dtype=torch.float32, device=device)
+            garside_length_tensor = torch.tensor([k], dtype=torch.float32, device=device)
 
-            factor_logits, _ = model(x.unsqueeze(0).to(device), min_degree=min_degree_tensor)
+            factor_logits, _ = model(
+                x.unsqueeze(0).to(device),
+                min_degree=min_degree_tensor,
+                garside_length=garside_length_tensor,
+            )
             confusion = confusion_score_from_logits(factor_logits)[0]
             probs = torch.softmax(factor_logits[0], dim=-1).cpu()
 

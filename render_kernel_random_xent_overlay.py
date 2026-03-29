@@ -86,8 +86,13 @@ def build_kernel_series(
 
             batch_tensors = torch.stack(prefix_tensors, dim=0).to(dtype=torch.long)
             batch_min_degrees = torch.stack(prefix_min_degrees, dim=0).to(dtype=torch.float32)
+            batch_lengths = torch.arange(1, len(factor_ids) + 1, dtype=torch.float32, device=resolved_device)
             targets = torch.tensor(factor_ids, dtype=torch.long, device=resolved_device)
-            factor_logits, _ = model(batch_tensors, min_degree=batch_min_degrees)
+            factor_logits, _ = model(
+                batch_tensors,
+                min_degree=batch_min_degrees,
+                garside_length=batch_lengths,
+            )
             xent = F.cross_entropy(factor_logits, targets, reduction="none").tolist()
             prefix_lens = list(range(1, len(factor_ids) + 1))
 

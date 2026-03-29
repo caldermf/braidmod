@@ -1,16 +1,17 @@
 import argparse
+import copy
 import json
 import math
 import os
 from dataclasses import dataclass
-from itertools import permutations
 
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, Dataset, random_split
 
+from garside_models import PERMUTATIONS_S4, build_model_from_config
 
-PERMUTATIONS_S4 = list(permutations(range(4)))
+
 PERM_TO_ID = {perm: idx for idx, perm in enumerate(PERMUTATIONS_S4)}
 
 
@@ -18,6 +19,7 @@ PERM_TO_ID = {perm: idx for idx, perm in enumerate(PERMUTATIONS_S4)}
 class TrainConfig:
     data_path: str
     p: int
+    model_type: str = "mlp"
     batch_size: int = 256
     epochs: int = 40
     lr: float = 3e-4
@@ -35,6 +37,17 @@ class TrainConfig:
     out_dir: str = "artifacts"
     device: str = "auto"
     use_min_degree: bool = True
+    use_garside_length: bool = False
+    matrix_size: int = 3
+    d_model: int = 256
+    ffn_mult: float = 4.0
+    num_local_blocks: int = 2
+    num_local_heads: int = 4
+    num_global_blocks: int = 6
+    num_global_heads: int = 8
+    label_smoothing: float = 0.0
+    ema_decay: float = 0.0
+    selection_objective: str = "metric"  # one of: metric, loss
 
 
 def set_seed(seed: int) -> None:
@@ -58,11 +71,20 @@ class BurauDataset(Dataset):
 
         x = []
         min_degrees = []
+        garside_lengths = []
         y_perm = []
         y_desc = []
         for rec in records:
             tensor = rec["burau_tensor"]
             min_degrees.append(int(rec.get("burau_min_degree", 0)))
+            if "gnf_factors" in rec:
+                garside_lengths.append(len(rec["gnf_factors"]))
+            elif "garside_length" in rec:
+                garside_lengths.append(int(rec["garside_length"]))
+            elif "gnf_length" in rec:
+                garside_lengths.append(int(rec["gnf_length"]))
+            else:
+                garside_lengths.append(0)
             perm = tuple(rec["final_factor_perm"])
             rdesc = rec.get("final_factor_right_descent", [])
 
@@ -87,113 +109,23 @@ class BurauDataset(Dataset):
 
         self.x = x_tensor
         self.min_degrees = torch.tensor(min_degrees, dtype=torch.float32)
+        self.garside_lengths = torch.tensor(garside_lengths, dtype=torch.float32)
         self.y_perm = torch.tensor(y_perm, dtype=torch.long)
         self.y_desc = torch.tensor(y_desc, dtype=torch.float32)
         self.D = self.x.shape[1]
+        self.matrix_size = self.x.shape[2]
 
     def __len__(self):
         return self.x.shape[0]
 
     def __getitem__(self, idx):
-        return self.x[idx], self.min_degrees[idx], self.y_perm[idx], self.y_desc[idx]
-
-
-class ResidualMLPBlock(nn.Module):
-    def __init__(self, hidden_dim: int, dropout: float):
-        super().__init__()
-        self.net = nn.Sequential(
-            nn.LayerNorm(hidden_dim),
-            nn.Linear(hidden_dim, 4 * hidden_dim),
-            nn.GELU(),
-            nn.Dropout(dropout),
-            nn.Linear(4 * hidden_dim, hidden_dim),
-            nn.Dropout(dropout),
+        return (
+            self.x[idx],
+            self.min_degrees[idx],
+            self.garside_lengths[idx],
+            self.y_perm[idx],
+            self.y_desc[idx],
         )
-
-    def forward(self, x):
-        return x + self.net(x)
-
-
-class BurauEmbeddingMLP(nn.Module):
-    """
-    Embeds categorical mod-p entries + learned (depth,row,col) position embeddings,
-    then applies a residual MLP trunk.
-    """
-
-    def __init__(
-        self,
-        p: int,
-        D: int,
-        embed_dim: int = 32,
-        hidden_dim: int = 1024,
-        blocks: int = 3,
-        dropout: float = 0.1,
-        use_aux_head: bool = True,
-        use_min_degree: bool = True,
-    ):
-        super().__init__()
-        self.p = p
-        self.D = D
-        self.use_aux_head = use_aux_head
-        self.use_min_degree = use_min_degree
-
-        self.value_emb = nn.Embedding(p, embed_dim)
-        self.depth_emb = nn.Embedding(D, embed_dim)
-        self.row_emb = nn.Embedding(3, embed_dim)
-        self.col_emb = nn.Embedding(3, embed_dim)
-
-        flat_dim = D * 3 * 3 * embed_dim
-        self.input_proj = nn.Sequential(
-            nn.LayerNorm(flat_dim),
-            nn.Linear(flat_dim, hidden_dim),
-            nn.GELU(),
-            nn.Dropout(dropout),
-        )
-        if self.use_min_degree:
-            self.min_degree_proj = nn.Sequential(
-                nn.Linear(1, hidden_dim),
-                nn.GELU(),
-                nn.Dropout(dropout),
-            )
-        self.blocks = nn.Sequential(
-            *[ResidualMLPBlock(hidden_dim=hidden_dim, dropout=dropout) for _ in range(blocks)]
-        )
-        self.trunk_norm = nn.LayerNorm(hidden_dim)
-        self.factor_head = nn.Linear(hidden_dim, len(PERMUTATIONS_S4))
-        self.desc_head = nn.Linear(hidden_dim, 3)
-
-        depth_idx = torch.arange(D).view(D, 1, 1)
-        row_idx = torch.arange(3).view(1, 3, 1)
-        col_idx = torch.arange(3).view(1, 1, 3)
-        self.register_buffer("depth_idx", depth_idx, persistent=False)
-        self.register_buffer("row_idx", row_idx, persistent=False)
-        self.register_buffer("col_idx", col_idx, persistent=False)
-
-    def forward(self, x, min_degree=None):
-        # x: [B, D, 3, 3] with integer values in [0, p-1]
-        if x.shape[1] != self.D:
-            raise ValueError(f"Model D={self.D}, got input depth {x.shape[1]}")
-
-        v = self.value_emb(x)  # [B, D, 3, 3, E]
-        pos = (
-            self.depth_emb(self.depth_idx)
-            + self.row_emb(self.row_idx)
-            + self.col_emb(self.col_idx)
-        )  # [D, 3, 3, E]
-        h = v + pos.unsqueeze(0)
-        h = h.flatten(start_dim=1)
-        h = self.input_proj(h)
-        if self.use_min_degree:
-            if min_degree is None:
-                raise ValueError("Model expects min_degree input")
-            min_degree = min_degree.to(dtype=torch.float32, device=x.device).view(-1, 1)
-            h = h + self.min_degree_proj(min_degree)
-        h = self.blocks(h)
-        h = self.trunk_norm(h)
-
-        factor_logits = self.factor_head(h)
-        desc_logits = self.desc_head(h) if self.use_aux_head else None
-        return factor_logits, desc_logits
 
 
 def accuracy_from_logits(logits: torch.Tensor, targets: torch.Tensor) -> float:
@@ -288,13 +220,18 @@ def evaluate(model, loader, device, ce_loss, bce_loss, aux_weight, task):
     total_n = 0
     metric_name = None
     with torch.no_grad():
-        for x, min_degree, y_perm, y_desc in loader:
+        for x, min_degree, garside_length, y_perm, y_desc in loader:
             x = x.to(device, non_blocking=True)
             min_degree = min_degree.to(device, non_blocking=True)
+            garside_length = garside_length.to(device, non_blocking=True)
             y_perm = y_perm.to(device, non_blocking=True)
             y_desc = y_desc.to(device, non_blocking=True)
 
-            factor_logits, desc_logits = model(x, min_degree=min_degree)
+            factor_logits, desc_logits = model(
+                x,
+                min_degree=min_degree,
+                garside_length=garside_length,
+            )
             loss, metric, metric_name = compute_task_loss_and_metric(
                 task=task,
                 factor_logits=factor_logits,
@@ -313,6 +250,18 @@ def evaluate(model, loader, device, ce_loss, bce_loss, aux_weight, task):
     return total_loss / total_n, total_metric / total_n, metric_name
 
 
+@torch.no_grad()
+def update_ema_model(ema_model: nn.Module, model: nn.Module, decay: float) -> None:
+    ema_state = ema_model.state_dict()
+    model_state = model.state_dict()
+    for name, ema_value in ema_state.items():
+        model_value = model_state[name].detach()
+        if torch.is_floating_point(ema_value):
+            ema_value.mul_(decay).add_(model_value, alpha=1.0 - decay)
+        else:
+            ema_value.copy_(model_value)
+
+
 def train(config: TrainConfig):
     set_seed(config.seed)
     os.makedirs(config.out_dir, exist_ok=True)
@@ -320,6 +269,11 @@ def train(config: TrainConfig):
     with open(config.data_path, "r", encoding="utf-8") as f:
         records = json.load(f)
     dataset = BurauDataset(records, p=config.p)
+    if config.use_garside_length and torch.any(dataset.garside_lengths <= 0):
+        raise ValueError(
+            "Dataset is missing positive Garside lengths for some records; "
+            "expected 'gnf_factors', 'garside_length', or 'gnf_length'."
+        )
     train_loader, val_loader = make_loaders(
         dataset=dataset,
         batch_size=config.batch_size,
@@ -329,23 +283,23 @@ def train(config: TrainConfig):
     )
 
     device = resolve_device(config.device)
-    model = BurauEmbeddingMLP(
+    config.matrix_size = dataset.matrix_size
+    model = build_model_from_config(
+        vars(config),
         p=config.p,
         D=dataset.D,
-        embed_dim=config.embed_dim,
-        hidden_dim=config.hidden_dim,
-        blocks=config.blocks,
-        dropout=config.dropout,
-        use_aux_head=(config.task != "final_factor"),
-        use_min_degree=config.use_min_degree,
+        matrix_size=dataset.matrix_size,
     ).to(device)
+    num_params = sum(param.numel() for param in model.parameters())
+    print(f"model_type={config.model_type} num_parameters={num_params}")
 
     optimizer = torch.optim.AdamW(
         model.parameters(),
         lr=config.lr,
         weight_decay=config.weight_decay,
     )
-    ce_loss = nn.CrossEntropyLoss()
+    ce_loss_train = nn.CrossEntropyLoss(label_smoothing=config.label_smoothing)
+    ce_loss_eval = nn.CrossEntropyLoss()
     bce_loss = nn.BCEWithLogitsLoss()
 
     total_steps = config.epochs * len(train_loader)
@@ -361,8 +315,37 @@ def train(config: TrainConfig):
     except TypeError:
         scaler = torch.cuda.amp.GradScaler(enabled=use_amp)
 
+    ema_model = None
+    if config.ema_decay > 0.0:
+        if not (0.0 < config.ema_decay < 1.0):
+            raise ValueError("ema_decay must be in (0,1)")
+        ema_model = copy.deepcopy(model)
+        ema_model.requires_grad_(False)
+        ema_model.eval()
+
     best_val_metric = -1.0
+    best_val_loss = float("inf")
     best_path = os.path.join(config.out_dir, "best_model.pt")
+    best_metric_path = os.path.join(config.out_dir, "best_metric_model.pt")
+    best_loss_path = os.path.join(config.out_dir, "best_loss_model.pt")
+    history_path = os.path.join(config.out_dir, "history.json")
+    history = []
+
+    def make_checkpoint_payload(best_metric_value: float, best_loss_value: float, eval_model_name: str):
+        source_model = ema_model if ema_model is not None else model
+        return {
+            "model_state": source_model.state_dict(),
+            "config": vars(config),
+            "D": dataset.D,
+            "p": config.p,
+            "matrix_size": dataset.matrix_size,
+            "perm_classes": [list(p_) for p_ in PERMUTATIONS_S4],
+            "best_val_metric": best_metric_value,
+            "best_val_loss": best_loss_value,
+            "best_metric_name": metric_name,
+            "selection_objective": config.selection_objective,
+            "eval_model": eval_model_name,
+        }
 
     for epoch in range(1, config.epochs + 1):
         model.train()
@@ -371,79 +354,130 @@ def train(config: TrainConfig):
         running_n = 0
         metric_name = None
 
-        for x, min_degree, y_perm, y_desc in train_loader:
+        for x, min_degree, garside_length, y_perm, y_desc in train_loader:
             x = x.to(device, non_blocking=True)
             min_degree = min_degree.to(device, non_blocking=True)
+            garside_length = garside_length.to(device, non_blocking=True)
             y_perm = y_perm.to(device, non_blocking=True)
             y_desc = y_desc.to(device, non_blocking=True)
 
             optimizer.zero_grad(set_to_none=True)
             with torch.autocast(device_type=device.type, dtype=torch.float16, enabled=use_amp):
-                factor_logits, desc_logits = model(x, min_degree=min_degree)
-                loss, metric, metric_name = compute_task_loss_and_metric(
+                factor_logits, desc_logits = model(
+                    x,
+                    min_degree=min_degree,
+                    garside_length=garside_length,
+                )
+                opt_loss, _, _ = compute_task_loss_and_metric(
                     task=config.task,
                     factor_logits=factor_logits,
                     desc_logits=desc_logits,
                     y_perm=y_perm,
                     y_desc=y_desc,
-                    ce_loss=ce_loss,
+                    ce_loss=ce_loss_train,
+                    bce_loss=bce_loss,
+                    aux_weight=config.aux_weight,
+                )
+                log_loss, metric, metric_name = compute_task_loss_and_metric(
+                    task=config.task,
+                    factor_logits=factor_logits.detach(),
+                    desc_logits=None if desc_logits is None else desc_logits.detach(),
+                    y_perm=y_perm,
+                    y_desc=y_desc,
+                    ce_loss=ce_loss_eval,
                     bce_loss=bce_loss,
                     aux_weight=config.aux_weight,
                 )
 
-            scaler.scale(loss).backward()
+            scaler.scale(opt_loss).backward()
             scaler.unscale_(optimizer)
             nn.utils.clip_grad_norm_(model.parameters(), config.grad_clip)
             scaler.step(optimizer)
             scaler.update()
             scheduler.step()
+            if ema_model is not None:
+                update_ema_model(ema_model, model, decay=config.ema_decay)
 
             n = x.size(0)
             running_n += n
-            running_loss += loss.item() * n
+            running_loss += log_loss.item() * n
             running_metric += metric * n
         train_loss = running_loss / running_n
         train_metric = running_metric / running_n
+        eval_model = ema_model if ema_model is not None else model
         val_loss, val_metric, metric_name = evaluate(
-            model=model,
+            model=eval_model,
             loader=val_loader,
             device=device,
-            ce_loss=ce_loss,
+            ce_loss=ce_loss_eval,
             bce_loss=bce_loss,
             aux_weight=config.aux_weight,
             task=config.task,
         )
 
+        eval_model_name = "ema" if ema_model is not None else "raw"
         if val_metric > best_val_metric:
             best_val_metric = val_metric
-            torch.save(
-        {
-            "model_state": model.state_dict(),
-            "config": vars(config),
-            "D": dataset.D,
-            "p": config.p,
-                    "perm_classes": [list(p_) for p_ in PERMUTATIONS_S4],
-                    "best_val_metric": best_val_metric,
-                    "best_metric_name": metric_name,
-                },
-                best_path,
-            )
+            payload = make_checkpoint_payload(best_val_metric, best_val_loss, eval_model_name)
+            torch.save(payload, best_metric_path)
+            if config.selection_objective == "metric":
+                torch.save(payload, best_path)
+
+        if val_loss < best_val_loss:
+            best_val_loss = val_loss
+            payload = make_checkpoint_payload(best_val_metric, best_val_loss, eval_model_name)
+            torch.save(payload, best_loss_path)
+            if config.selection_objective == "loss":
+                torch.save(payload, best_path)
+
+        history.append(
+            {
+                "epoch": epoch,
+                "train_loss": train_loss,
+                "val_loss": val_loss,
+                "metric_name": metric_name,
+                "train_metric": train_metric,
+                "val_metric": val_metric,
+                "lr": scheduler.get_last_lr()[0],
+                "eval_model": eval_model_name,
+            }
+        )
+        with open(history_path, "w", encoding="utf-8") as f:
+            json.dump(history, f, indent=2)
 
         print(
             f"epoch={epoch:03d} "
             f"train_loss={train_loss:.4f} train_{metric_name}={train_metric:.4f} "
             f"val_loss={val_loss:.4f} val_{metric_name}={val_metric:.4f} "
-            f"lr={scheduler.get_last_lr()[0]:.2e}"
+            f"lr={scheduler.get_last_lr()[0]:.2e} "
+            f"eval_model={eval_model_name}"
         )
 
+    if config.selection_objective == "metric" and not os.path.exists(best_path):
+        torch.save(make_checkpoint_payload(best_val_metric, best_val_loss, eval_model_name), best_path)
+    if config.selection_objective == "loss" and not os.path.exists(best_path):
+        torch.save(make_checkpoint_payload(best_val_metric, best_val_loss, eval_model_name), best_path)
+
+    print(f"best_val_loss={best_val_loss:.4f}")
     print(f"best_val_{metric_name}={best_val_metric:.4f}")
+    print(f"best_loss_checkpoint={best_loss_path}")
+    print(f"best_metric_checkpoint={best_metric_path}")
     print(f"best_checkpoint={best_path}")
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Train GPU MLP on Burau tensors to predict final Garside factor.")
+    parser = argparse.ArgumentParser(
+        description="Train a Burau-tensor model to predict the final Garside factor."
+    )
     parser.add_argument("--data-path", type=str, required=True, help="Path to JSON dataset (list of records)")
     parser.add_argument("--p", type=int, required=True, help="Prime modulus for input tokens")
+    parser.add_argument(
+        "--model-type",
+        type=str,
+        default="mlp",
+        choices=["mlp", "transformer"],
+        help="Architecture to train.",
+    )
     parser.add_argument("--batch-size", type=int, default=256)
     parser.add_argument("--epochs", type=int, default=40)
     parser.add_argument("--lr", type=float, default=3e-4)
@@ -453,7 +487,22 @@ def parse_args():
     parser.add_argument("--embed-dim", type=int, default=32)
     parser.add_argument("--hidden-dim", type=int, default=1024)
     parser.add_argument("--blocks", type=int, default=3)
+    parser.add_argument("--d-model", type=int, default=256)
+    parser.add_argument("--ffn-mult", type=float, default=4.0)
+    parser.add_argument("--num-local-blocks", type=int, default=2)
+    parser.add_argument("--num-local-heads", type=int, default=4)
+    parser.add_argument("--num-global-blocks", type=int, default=6)
+    parser.add_argument("--num-global-heads", type=int, default=8)
     parser.add_argument("--dropout", type=float, default=0.1)
+    parser.add_argument("--label-smoothing", type=float, default=0.0)
+    parser.add_argument("--ema-decay", type=float, default=0.0)
+    parser.add_argument(
+        "--selection-objective",
+        type=str,
+        default="metric",
+        choices=["metric", "loss"],
+        help="Which validation quantity best_model.pt should optimize.",
+    )
     parser.add_argument("--aux-weight", type=float, default=0.2)
     parser.add_argument(
         "--task",
@@ -471,6 +520,11 @@ def parse_args():
         action="store_true",
         help="Disable the extra projective min-degree feature for compatibility experiments.",
     )
+    parser.add_argument(
+        "--use-garside-length",
+        action="store_true",
+        help="Condition the model on the true Garside length as an extra scalar input.",
+    )
     return parser.parse_args()
 
 
@@ -479,6 +533,7 @@ if __name__ == "__main__":
     cfg = TrainConfig(
         data_path=args.data_path,
         p=args.p,
+        model_type=args.model_type,
         batch_size=args.batch_size,
         epochs=args.epochs,
         lr=args.lr,
@@ -488,7 +543,16 @@ if __name__ == "__main__":
         embed_dim=args.embed_dim,
         hidden_dim=args.hidden_dim,
         blocks=args.blocks,
+        d_model=args.d_model,
+        ffn_mult=args.ffn_mult,
+        num_local_blocks=args.num_local_blocks,
+        num_local_heads=args.num_local_heads,
+        num_global_blocks=args.num_global_blocks,
+        num_global_heads=args.num_global_heads,
         dropout=args.dropout,
+        label_smoothing=args.label_smoothing,
+        ema_decay=args.ema_decay,
+        selection_objective=args.selection_objective,
         aux_weight=args.aux_weight,
         task=args.task,
         num_workers=args.num_workers,
@@ -496,5 +560,6 @@ if __name__ == "__main__":
         out_dir=args.out_dir,
         device=args.device,
         use_min_degree=not args.no_min_degree,
+        use_garside_length=args.use_garside_length,
     )
     train(cfg)

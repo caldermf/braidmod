@@ -69,7 +69,12 @@ def build_progression(
             )
             x = torch.tensor(tensor, dtype=torch.long)
             min_degree_tensor = torch.tensor([min_degree], dtype=torch.float32, device=device)
-            factor_logits, _ = model(x.unsqueeze(0).to(device), min_degree=min_degree_tensor)
+            garside_length_tensor = torch.tensor([k], dtype=torch.float32, device=device)
+            factor_logits, _ = model(
+                x.unsqueeze(0).to(device),
+                min_degree=min_degree_tensor,
+                garside_length=garside_length_tensor,
+            )
             entropy_confusion = confusion_score_from_logits(factor_logits)[0]
             target_id = PERM_TO_ID[tuple(factors[k - 1])]
             target_tensor = torch.tensor([target_id], dtype=torch.long, device=device)
