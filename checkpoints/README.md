@@ -11,8 +11,8 @@ This is the baseline MLP training run used for comparison in the writeup.
 
 The full raw MLP checkpoint is not checked in because the PyTorch file is too
 large for a normal GitHub-friendly repository. The exact training recipe is
-preserved in `jobs/train_original_mlp.sh`, and the baseline remains fully
-reproducible from the tracked dataset and log.
+preserved in `jobs/train_original_mlp.sh`, and the baseline remains
+reproducible after regenerating the reference dataset under `data/generated/`.
 
 ## `best_transformer/`
 

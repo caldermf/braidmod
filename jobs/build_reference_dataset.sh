@@ -16,7 +16,7 @@ set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PYTHON_PATH="${PYTHON_PATH:-$REPO_ROOT/.venv/bin/python}"
-OUT_PATH="${OUT_PATH:-$REPO_ROOT/data/burau_gnf_L30to60_p5_D140_N200000_uniform_corrected.json}"
+OUT_PATH="${OUT_PATH:-$REPO_ROOT/data/generated/burau_gnf_L30to60_p5_D140_N200000_uniform_corrected.json}"
 
 mkdir -p "$REPO_ROOT/slurm_logs" "$(dirname "$OUT_PATH")"
 cd "$REPO_ROOT"

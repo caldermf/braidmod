@@ -1,66 +1,63 @@
 # Model Confusion as a Statistical Kernel Signal
 
-## Setup
+## Problem
 
 We work in `B_4` with the reduced Burau representation mod `p`. For a braid in
 left Garside normal form
 
 `Delta^d w_1 ... w_\ell`,
 
-we train a model to predict the final Garside factor `w_\ell` from the Burau
-matrix alone.
+the supervised task is to predict the final Garside factor `w_\ell` from the
+Burau matrix alone.
 
-The training target is deliberately not kernel membership. The point is to
-learn a structural algebraic feature that ordinary braids exhibit and then ask
-when a prefix looks atypical to that model.
+That target is deliberately **not** kernel membership. The goal is to learn a
+structural algebraic feature of ordinary braids and then ask what happens when
+a prefix stops looking ordinary to the model.
 
-## The central idea
+## Core idea
 
-Given a prefix, the model produces logits over the possible final Garside
-factors. We then study quantities such as:
+For each prefix, the model produces logits over possible final Garside factors.
+From those logits we extract model-confusion signals such as:
 
 - entropy of the factor distribution
 - cross-entropy against the actual final factor
-- smoothed versions of those signals along prefixes
+- smoothed versions of those signals along prefix trajectories
 
-We refer to these as model-confusion signals. The working heuristic is that
-kernel-like prefixes should systematically induce abnormal uncertainty or
-abnormal target surprise.
+The working heuristic is simple: if a prefix comes from a kernel element, it
+should often look abnormal to a model trained only on standard Garside data.
 
-## Why this is interesting
+## Why this is useful
 
-This approach avoids supervised kernel labels. Instead, it uses:
+This avoids direct kernel supervision. The workflow is:
 
-1. ordinary random Garside data
-2. a prediction task with algebraic meaning
-3. model confusion as a downstream probe
+1. sample ordinary random Garside data
+2. train on a mathematically meaningful prediction target
+3. reuse model confusion as a probe for unusual prefixes
 
-That makes the search procedure conceptually cleaner: the model is not trained
-to say "kernel", but its failure mode still becomes informative.
+That keeps the learning problem cleaner while still producing a practical
+signal for search.
 
-## Models
+## Public models
 
 ### Original MLP baseline
 
-The MLP treats the Burau tensor as a flattened structured input with discrete
-embeddings. It works surprisingly well as a first-pass structural predictor and
-already yields useful confusion signals.
-
-Public baseline summary:
+The MLP flattens the Burau tensor and applies discrete embeddings followed by a
+structured feedforward stack.
 
 - validation factor accuracy: `0.7266`
 - curves: `figures/mlp_training_curves.png`
 
+Even this baseline already produces usable confusion curves on saved kernel
+examples.
+
 ### Best transformer
 
-The final public transformer is a hierarchical encoder:
+The best public model is a hierarchical transformer:
 
-- local encoder across each `3 x 3` degree slice
-- global encoder across degrees
-- trained directly on final-factor prediction
-- checkpoint selection by validation loss
-
-Public best-transformer summary:
+- local attention inside each `3 x 3` degree slice
+- global attention across degrees
+- direct training on final-factor prediction
+- model selection by validation loss
 
 - validation loss: `0.2178`
 - validation factor accuracy: `0.9388`
@@ -69,54 +66,53 @@ Public best-transformer summary:
 
 ## Prefix-level behavior
 
-The most useful public figures are the kernel-vs-random overlays.
-
-Two especially clean summary plots are:
+The clearest public figures are the kernel-vs-random overlays based on target
+cross-entropy.
 
 - `figures/kernel_avg_first5_vs_random_avg10.png`
 - `figures/kernel_avg_first5_vs_random_avg15.png`
 
-These average the first five saved kernel-hit trajectories and compare them to
-the average of five saved random braids. The transformer's target
-cross-entropy remains markedly elevated on the kernel side across long prefix
+These plots average five saved kernel-hit trajectories and compare them to the
+average of five saved random braids. The transformer's smoothed target
+cross-entropy stays substantially higher on the kernel side over long prefix
 intervals.
 
-We also keep the full multi-curve overlay:
+We also keep:
 
 - `figures/kernel_hits_vs_random_avg10.png`
-
-and the suite-level Geordie/random summaries:
-
 - `figures/geordie_vs_random_cumulative_xent.png`
 - `figures/geordie_entropy_confusion.png`
 
+The first shows the individual saved trajectories. The latter two summarize the
+Geordie kernel word against random controls.
+
 ## Search
 
-The search code in `reservoir_search_braidmod.py` does not require direct
-kernel supervision either. It can score frontier expansions using:
+`reservoir_search_braidmod.py` turns these signals into a search heuristic. It
+can score frontier expansions with:
 
-- Burau projective length alone
+- projective length alone
 - model target cross-entropy alone
-- frontier-based combinations of projlen and model confusion
+- combined frontier scores that blend projlen and model confusion
 
-This is the part that turns the learned signal into a practical mathematical
-tool rather than a classification demo.
+That is the main point of the repo: not just that the model fits the factor
+prediction task, but that its confusion profile becomes useful for locating
+promising regions of braid space.
 
 ## Reproducibility
 
-Tracked inputs for the public confusion figures live in:
+Tracked public inputs for the confusion figures live in:
 
 - `figure_data/confusion_suite_tuned/`
 - `figure_data/search/kernel_hits_len60.json`
 
-Tracked model artifacts live in:
+Tracked public model artifacts live in:
 
 - `checkpoints/original_mlp/`
 - `checkpoints/best_transformer/`
 
-Curated cluster wrappers live in:
+Large training corpora are intentionally not checked into GitHub. Regenerate
+them under `data/generated/` using `generate_dataset.py` or `jobs/build_reference_dataset.sh`.
 
-- `jobs/`
-
-Older ablations, historical wrappers, and side experiments have been moved to
-`prototypes/`.
+Historical ablations, older wrappers, and side experiments were moved to
+`prototypes/` to keep the top-level repo focused on the public narrative.

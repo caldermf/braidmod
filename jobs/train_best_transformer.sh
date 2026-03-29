@@ -19,7 +19,7 @@ set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PYTHON_PATH="${PYTHON_PATH:-/home/com36/.conda/envs/burau_gpu/bin/python}"
-DATA_PATH="${DATA_PATH:-$REPO_ROOT/data/burau_gnf_L30to60_p5_D140_N200000_uniform_corrected.json}"
+DATA_PATH="${DATA_PATH:-$REPO_ROOT/data/generated/burau_gnf_L30to60_p5_D140_N200000_uniform_corrected.json}"
 OUT_DIR="${OUT_DIR:-$REPO_ROOT/artifacts/public_best_transformer}"
 
 mkdir -p "$REPO_ROOT/slurm_logs" "$OUT_DIR"
