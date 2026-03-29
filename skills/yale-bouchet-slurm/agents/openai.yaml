@@ -1,7 +1,0 @@
-interface:
-  display_name: "Yale Bouchet Slurm"
-  short_description: "Bouchet SLURM job patterns"
-  default_prompt: "Use $yale-bouchet-slurm to prepare or review a Bouchet SLURM command or job script."
-
-policy:
-  allow_implicit_invocation: true

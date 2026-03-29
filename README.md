@@ -1,259 +1,206 @@
-# braidmod
+# Burau Model Confusion in `B_4`
 
-Small research repo for generating Burau-mod-p braid data in `B_4` and training either an MLP or a hierarchical transformer to predict the final Garside factor or its right descent set.
+This repository studies a simple idea for probing the kernel of the reduced
+Burau representation mod `p`:
 
-The code now uses the reduced Burau normalization
-`sigma_1 -> [[-v^2, -v], [0, 1]]`,
-`sigma_{n-1} -> [[1, 0], [-v, -v^2]]`,
-and
-`sigma_i -> [[1, 0, 0], [-v, -v^2, -v], [0, 0, 1]]`
-for `1 < i < n - 1`.
-Older datasets and artifacts generated before this correction are not compatible with the current code unless they are regenerated.
+1. Train a model to predict an algebraic property of a braid from its Burau
+   matrix, rather than training directly on kernel membership.
+2. Measure the model's uncertainty or target surprise along prefixes.
+3. Use that "model confusion" signal as a statistical guide for search.
 
-## What's here
+In this project, the supervised task is:
 
-- `braid_data.py`: Garside-factor utilities, GNF validation, Burau polynomial/tensor evaluation, and random dataset generation.
-- `train_garside_mlp.py`: training entry point for `final_factor`, `right_descent`, or `multitask` with either `--model-type mlp` or `--model-type transformer`.
-- `garside_models.py`: shared MLP / transformer definitions plus checkpoint-aware model factory.
-- `predict_garside_mlp.py`: inference CLI for trained checkpoints.
-- `reservoir_search_braidmod.py`: reservoir search over positive Garside words using projlen, model-based target cross-entropy, or frontier-distance multi-objective scoring.
-- `plot_training_curves.py`: plot loss and task metric from training logs.
-- `track_confusion_prefix.py`, `plot_prefix_confusion.py`, `generate_length54_confusion_suite.py`, `render_smoothed_xent_suite.py`: prefix-level confusion / target-xent analysis and rendering utilities.
-- `run_*.sh`: Slurm entrypoints for training, search, and rendering jobs on Bouchet.
-- `data/`: local JSON datasets.
+- input: a projectively normalized Burau tensor in `B_4`
+- label: the final Garside factor of the braid's left normal form
 
-## Environment
+The baseline is an MLP. The stronger model is a hierarchical transformer that
+encodes local structure inside each `3 x 3` degree slice and then aggregates
+across degrees.
 
-Install the ML dependencies into a local virtualenv:
+## Why this repo exists
+
+The reduced Burau representation is a classical object, but the kernel problem
+is difficult. Instead of asking a model to predict "kernel or not" directly, we
+ask it to infer structure that honest braids should exhibit. The working
+hypothesis is:
+
+- kernel-like prefixes should look atypical to a model trained on ordinary
+  Garside data
+- that atypicality should appear as elevated target cross-entropy or broader
+  uncertainty
+- a search procedure can exploit that signal without ever training on a kernel
+  label
+
+The result is a practical workflow that statistically separates saved kernel
+examples from random braids and plugs directly into reservoir search.
+
+## What to look at first
+
+- `docs/model_confusion.md`: the public-facing writeup
+- `figures/`: curated training and confusion plots
+- `checkpoints/`: public model artifacts and logs
+- `generate_dataset.py`: reproducible dataset generation CLI
+- `train_garside_mlp.py`: unified trainer for both the MLP and transformer
+- `reservoir_search_braidmod.py`: search with projlen and model-confusion scores
+
+## Public repo layout
+
+- `braid_data.py`
+  Garside normal form utilities, Burau evaluation, and the core dataset builder.
+- `generate_dataset.py`
+  Public CLI for generating Burau/Garside training data.
+- `train_garside_mlp.py`
+  Trainer for the original MLP and the final transformer.
+- `garside_models.py`, `garside_transformer.py`
+  Model definitions and checkpoint-aware construction.
+- `predict_garside_mlp.py`
+  Inference CLI for saved checkpoints.
+- `reservoir_search_braidmod.py`
+  Reservoir search with projlen, target cross-entropy, and frontier-style
+  combined scoring.
+- `plot_prefix_confusion.py`, `track_confusion_prefix.py`,
+  `render_kernel_random_xent_overlay.py`,
+  `render_average_kernel_random_xent_overlay.py`
+  Prefix-confusion analysis and figure generation.
+- `jobs/`
+  Clean Slurm entrypoints for the public workflow.
+- `checkpoints/`
+  Public baseline and best-transformer artifacts.
+- `figure_data/`
+  Small tracked JSON inputs used to reproduce the public confusion figures.
+- `figures/`
+  Curated public plots.
+- `prototypes/`
+  Archived experiments, cluster wrappers, notes, and prototype-only scripts.
+
+## Quick start
+
+Create an environment:
 
 ```bash
 python -m venv .venv
 .venv/bin/python -m pip install -r requirements-ml.txt
 ```
 
-## Dataset format
-
-Training expects a JSON list of records with:
-
-- `burau_tensor`: integer tensor shaped `[D, 3, 3]`
-- `final_factor_perm`: permutation of `0..3`
-- `final_factor_right_descent`: subset of `{0, 1, 2}`
-
-`DataSetBuilder` in `braid_data.py` can generate compatible samples.
-
-## Train
-
-Example training run on the checked-in `p=5`, `D=96` dataset:
+Generate a dataset:
 
 ```bash
-.venv/bin/python train_garside_mlp.py \
-  --data-path data/burau_gnf_L20_p5_D96_N20000.json \
+.venv/bin/python generate_dataset.py \
+  --output-path data/burau_gnf_L30to60_p5_D140_N200000_uniform_corrected.json \
+  --num-samples 200000 \
+  --length-min 30 \
+  --length-max 60 \
   --p 5 \
-  --task multitask \
-  --out-dir artifacts
+  --D 140
 ```
 
-Tasks:
-
-- `final_factor`: predict the final Garside factor permutation
-- `right_descent`: predict the right descent set only
-- `multitask`: predict the final factor with an auxiliary right-descent loss
-
-Train the hierarchical transformer from `SPEC.md` with:
+Train the original MLP baseline:
 
 ```bash
 .venv/bin/python train_garside_mlp.py \
-  --data-path data/burau_gnf_L30to60_p5_D140_N200000_uniform.json \
+  --data-path data/burau_gnf_L30to60_p5_D140_N200000_uniform_corrected.json \
+  --p 5 \
+  --task multitask \
+  --batch-size 512 \
+  --epochs 40 \
+  --embed-dim 32 \
+  --hidden-dim 1024 \
+  --blocks 3 \
+  --dropout 0.1 \
+  --aux-weight 0.2 \
+  --out-dir artifacts/public_original_mlp
+```
+
+Train the best transformer:
+
+```bash
+.venv/bin/python train_garside_mlp.py \
+  --data-path data/burau_gnf_L30to60_p5_D140_N200000_uniform_corrected.json \
   --p 5 \
   --model-type transformer \
-  --task multitask \
+  --task final_factor \
   --batch-size 256 \
-  --epochs 20 \
+  --epochs 30 \
   --d-model 256 \
   --ffn-mult 4 \
   --num-local-blocks 2 \
   --num-local-heads 4 \
   --num-global-blocks 6 \
   --num-global-heads 8 \
-  --out-dir artifacts/garside_transformer
+  --dropout 0.05 \
+  --label-smoothing 0.03 \
+  --selection-objective loss \
+  --out-dir artifacts/public_best_transformer
 ```
 
-Checkpoints include `p` and `D`; inference inputs must match both.
-`predict_garside_mlp.py` and the search/confusion tooling reconstruct either architecture from the saved checkpoint config.
-
-## Predict
-
-Run inference on a record from a dataset:
+Run model-confusion search:
 
 ```bash
-.venv/bin/python predict_garside_mlp.py \
-  --checkpoint artifacts/best_model.pt \
-  --dataset-path data/burau_gnf_L20_p5_D96_N20000.json \
-  --index 0
+.venv/bin/python reservoir_search_braidmod.py \
+  --p 5 \
+  --max-length 60 \
+  --bucket-size 100000 \
+  --use-best 300000 \
+  --bootstrap-length 5 \
+  --num-buckets 100 \
+  --score-type frontier_target_xent \
+  --checkpoint checkpoints/best_transformer/best_model.pt \
+  --device cuda \
+  --out-json artifacts/public_frontier_search.json
 ```
 
-Or pass a JSON file containing either `[D, 3, 3]` directly or `{"burau_tensor": ...}`.
-
-## Search
-
-`reservoir_search_braidmod.py` expands positive GNF words level by level, scores children, buckets them by score, keeps a uniform reservoir in each bucket, and advances the best survivors.
-
-Current score families:
-
-- `projlen`: minimize Burau projective support length only.
-- `target_xent_maximize`: maximize the model's normalized target cross-entropy using the built-in 5-step running average (`avg5`).
-- `frontier_target_xent`: combine normalized projlen with `avg5` target cross-entropy by measuring weighted distance to the levelwise Pareto frontier.
-
-The old hard-switch policy (`projlen` through some length, then pure target-xent) is still in the code for reproducibility, but it is no longer the recommended workflow. The current meaningful comparison is:
-
-- pure `projlen`
-- pure `target_xent_maximize` with `avg5`
-- `frontier_target_xent` with `avg5`
-
-Short comparison run:
+Render the public averaged kernel-vs-random confusion curves:
 
 ```bash
-sbatch run_frontier_target_xent_comparison_len40.sh
+.venv/bin/python render_average_kernel_random_xent_overlay.py \
+  --search-json figure_data/search/kernel_hits_len60.json \
+  --checkpoint checkpoints/best_transformer/best_model.pt \
+  --suite-dir figure_data/confusion_suite_tuned \
+  --out-png figures/generated/kernel_avg_first5_vs_random_avg_target_xent_avg15.png \
+  --device cuda \
+  --mode avg5 \
+  --window 15 \
+  --max-length 60 \
+  --num-kernels 5
 ```
 
-This launches three length-40 searches on `scavenge_gpu`, writes three JSON summaries under `artifacts/`, and renders a comparison plot of best projlen by level.
+## Public artifacts
 
-## Plot logs
+### Baseline MLP
 
-The trainer prints lines like:
+- curves: `checkpoints/original_mlp/training_curves.png`
+- log: `checkpoints/original_mlp/train.log`
+- headline validation accuracy: `0.7266`
 
-```text
-epoch=001 train_loss=... train_factor_acc=... val_loss=... val_factor_acc=... lr=...
-```
+The full baseline checkpoint is intentionally not tracked because the raw
+PyTorch file exceeds a normal GitHub-friendly size. The exact training job and
+log are included, so the baseline remains reproducible.
 
-Plot them with:
+### Best transformer
 
-```bash
-.venv/bin/python plot_training_curves.py --log train.log --out training_curves.png
-```
+- checkpoint: `checkpoints/best_transformer/best_model.pt`
+- curves: `checkpoints/best_transformer/training_curves.png`
+- comparison plot: `checkpoints/best_transformer/mlp_vs_transformer_validation.png`
+- headline validation loss: `0.2178`
+- headline validation factor accuracy: `0.9388`
 
-The plotter supports both older `*_acc` logs and newer task-specific metrics such as `factor_acc` and `desc_exact`.
+### Public figure set
 
-## Repo conventions
+- `figures/kernel_avg_first5_vs_random_avg10.png`
+- `figures/kernel_avg_first5_vs_random_avg15.png`
+- `figures/kernel_hits_vs_random_avg10.png`
+- `figures/geordie_vs_random_cumulative_xent.png`
+- `figures/geordie_entropy_confusion.png`
 
-- Treat `artifacts/`, `tmp_artifacts/`, and `tmp_artifacts_rd/` as generated outputs.
-- The large `N100000` dataset is intentionally ignored.
-- This directory is a prototype workspace, not a packaged library.
+## Cluster use
 
-## Yale Bouchet / Slurm instructions for Codex
+If you are running on Yale Bouchet, use the curated scripts in `jobs/`.
+The older experiment-specific wrappers are archived under `prototypes/slurm/`.
 
-This repo often runs on the Yale YCRC Bouchet cluster. Follow these rules exactly.
+## Prototypes
 
-### Current Bouchet partitions
-
-Public partitions:
-
-- `day`
-- `devel`
-- `week`
-- `gpu`
-- `gpu_h200`
-- `gpu_devel`
-- `bigmem`
-- `mpi`
-- `scavenge`
-- `scavenge_gpu`
-
-Priority partitions:
-
-- `priority`
-- `priority_gpu`
-- `priority_mpi`
-
-Private partition currently listed on Bouchet docs:
-
-- `pi_co54`
-
-### Core policy
-
-1. Always pass `--partition` explicitly.
-   Never rely on defaults.
-   On Yale, omitted partitions can land you somewhere unintended.
-   For this repo, the defaults are:
-   CPU jobs: `--partition=scavenge`
-   GPU jobs: `--partition=scavenge_gpu`
-
-2. Prefer scavenge partitions almost always.
-   Default to `scavenge` or `scavenge_gpu`.
-   Do not use `day`, `week`, `gpu`, `gpu_devel`, `bigmem`, `mpi`, `priority*`, or `pi_*` unless the human explicitly asks.
-
-3. GPU jobs must request GPUs explicitly.
-   Always pass `--gpus=...` for GPU work.
-   Default GPU request is usually:
-   `--gpus=1`
-   A generic GPU request is fine.
-
-4. Do not explicitly request H200 unless the human explicitly tells you to.
-   Do not use:
-   `--gpus=h200:...`
-   `--partition=gpu_h200`
-   `--constraint=h200`
-   A generic request like `--gpus=1` on `scavenge_gpu` is fine, even if Slurm happens to place the job on an H200.
-   The goal is to never explicitly ask for H200s unless instructed.
-
-5. Prefer short walltimes.
-   Calder prefers requesting about 1.5x the estimated runtime, not giant padded requests.
-   Example: if something should take about 25-30 minutes, ask for about 40-45 minutes, not 24 hours.
-   Do not request long times "just in case" unless explicitly told.
-
-6. Use scavenge with good hygiene.
-   `scavenge` and `scavenge_gpu` are preemptable.
-   If the code can restart safely, prefer:
-   `--requeue`
-   `--signal=B:USR1@120`
-   Save checkpoints regularly.
-   Write outputs incrementally and flush logs.
-
-7. Do not use `--mem-per-gpu`.
-   Use `--mem=...` or `--mem-per-cpu=...` instead.
-
-8. Use a real Python executable, not assumptions.
-   Some jobs need an explicit Python path.
-   If the repo or human provides a specific path like `PYTHON_PATH="/home/com36/.conda/envs/burau_gpu/bin/python"`, then use that exact path.
-   Do not replace a known working explicit Python path with bare `python` unless the human says to.
-   If no explicit path is provided, then load the expected environment and resolve Python deliberately.
-
-9. Do not do heavy setup on the login node.
-   If work is nontrivial, get an allocation with `salloc` or submit with `sbatch`.
-
-10. Check submitted jobs proactively.
-    After `sbatch`, capture the job ID.
-    Check queue state with:
-    `squeue --me`
-    and/or `squeue -j JOBID`
-    Inspect logs early after launch:
-    `tail -n 50 slurm_logs/<file>`
-    or `tail -f slurm_logs/<file>`
-    Confirm the job actually started correctly and is producing expected output.
-    If the job is pending, read the reason field from `squeue`.
-    If the job is running, make sure logs are advancing and the process is behaving sensibly.
-
-11. For Yale monitoring/debugging, prefer the usual cluster tools.
-    `squeue --me` to see current jobs
-    `jobstats JOBID` to inspect CPU, memory, and GPU utilization
-    `sacct -j JOBID --duplicates` if requeues or preemptions matter
-    `htnm` before longer jobs to see time until next maintenance
-
-12. Avoid idle GPU allocations.
-    Do not leave jobs sitting on GPUs while doing nothing.
-    Start the actual compute quickly.
-    If a job is meant to use GPUs, logs and utilization should reflect that.
-
-### Default command patterns
-
-#### CPU interactive
-
-```bash
-salloc \
-  --partition=scavenge \
-  --time=00:45:00 \
-  --nodes=1 \
-  --ntasks=1 \
-  --cpus-per-task=4 \
-  --mem=16G
-```
+Everything that did not belong in the public narrative was moved under
+`prototypes/`: abandoned ablations, one-off scripts, internal notes, cluster
+wrappers, and other research backlog. The point is to keep the top-level repo
+focused on the main mathematical story rather than the full notebook of
+everything tried along the way.

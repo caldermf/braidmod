@@ -1,0 +1,2935 @@
+{
+  "checkpoint": "/nfs/roberts/project/pi_com36/com36/burau-experiments/braidmod/artifacts/garside_transformer_tuned_factoronly_base_noema_L30to60_p5_D140_N200000_e30/best_model.pt",
+  "device": "cuda",
+  "D": 140,
+  "p": 5,
+  "metrics": {
+    "confusion_score": "Normalized entropy of the factor logits",
+    "entropy_confusion_score": "Normalized entropy of the factor logits",
+    "target_cross_entropy": "Cross-entropy loss against the actual final factor of the current prefix"
+  },
+  "d": 0,
+  "truncate_overflow": false,
+  "num_factors": 54,
+  "factors": [
+    [
+      2,
+      1,
+      0,
+      3
+    ],
+    [
+      2,
+      3,
+      1,
+      0
+    ],
+    [
+      3,
+      2,
+      0,
+      1
+    ],
+    [
+      2,
+      1,
+      0,
+      3
+    ],
+    [
+      2,
+      1,
+      3,
+      0
+    ],
+    [
+      3,
+      1,
+      0,
+      2
+    ],
+    [
+      2,
+      1,
+      0,
+      3
+    ],
+    [
+      2,
+      3,
+      1,
+      0
+    ],
+    [
+      0,
+      3,
+      2,
+      1
+    ],
+    [
+      3,
+      2,
+      0,
+      1
+    ],
+    [
+      2,
+      1,
+      0,
+      3
+    ],
+    [
+      2,
+      1,
+      3,
+      0
+    ],
+    [
+      1,
+      3,
+      2,
+      0
+    ],
+    [
+      3,
+      2,
+      0,
+      1
+    ],
+    [
+      2,
+      3,
+      1,
+      0
+    ],
+    [
+      0,
+      3,
+      2,
+      1
+    ],
+    [
+      0,
+      3,
+      2,
+      1
+    ],
+    [
+      0,
+      3,
+      2,
+      1
+    ],
+    [
+      0,
+      3,
+      2,
+      1
+    ],
+    [
+      0,
+      3,
+      2,
+      1
+    ],
+    [
+      0,
+      3,
+      2,
+      1
+    ],
+    [
+      3,
+      0,
+      2,
+      1
+    ],
+    [
+      3,
+      1,
+      0,
+      2
+    ],
+    [
+      2,
+      3,
+      1,
+      0
+    ],
+    [
+      0,
+      3,
+      2,
+      1
+    ],
+    [
+      0,
+      3,
+      2,
+      1
+    ],
+    [
+      3,
+      0,
+      2,
+      1
+    ],
+    [
+      3,
+      1,
+      2,
+      0
+    ],
+    [
+      3,
+      1,
+      0,
+      2
+    ],
+    [
+      2,
+      1,
+      3,
+      0
+    ],
+    [
+      3,
+      1,
+      0,
+      2
+    ],
+    [
+      2,
+      1,
+      0,
+      3
+    ],
+    [
+      2,
+      3,
+      1,
+      0
+    ],
+    [
+      0,
+      3,
+      2,
+      1
+    ],
+    [
+      3,
+      2,
+      0,
+      1
+    ],
+    [
+      2,
+      1,
+      0,
+      3
+    ],
+    [
+      2,
+      1,
+      0,
+      3
+    ],
+    [
+      2,
+      3,
+      0,
+      1
+    ],
+    [
+      2,
+      0,
+      3,
+      1
+    ],
+    [
+      1,
+      3,
+      2,
+      0
+    ],
+    [
+      3,
+      0,
+      2,
+      1
+    ],
+    [
+      3,
+      1,
+      2,
+      0
+    ],
+    [
+      3,
+      1,
+      0,
+      2
+    ],
+    [
+      2,
+      1,
+      0,
+      3
+    ],
+    [
+      2,
+      1,
+      3,
+      0
+    ],
+    [
+      0,
+      3,
+      1,
+      2
+    ],
+    [
+      2,
+      0,
+      3,
+      1
+    ],
+    [
+      3,
+      1,
+      2,
+      0
+    ],
+    [
+      1,
+      0,
+      3,
+      2
+    ],
+    [
+      3,
+      1,
+      0,
+      2
+    ],
+    [
+      2,
+      1,
+      0,
+      3
+    ],
+    [
+      2,
+      3,
+      0,
+      1
+    ],
+    [
+      0,
+      2,
+      3,
+      1
+    ],
+    [
+      3,
+      0,
+      1,
+      2
+    ]
+  ],
+  "progression": [
+    {
+      "prefix_len": 1,
+      "factor_added": [
+        2,
+        1,
+        0,
+        3
+      ],
+      "confusion_score": 0.43894270062446594,
+      "entropy_confusion_score": 0.43894270062446594,
+      "confidence_score": 0.5610572993755341,
+      "target_cross_entropy": 2.818636894226074,
+      "ground_truth_class_id": 14,
+      "burau_min_degree": 0,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 9,
+          "perm": [
+            1,
+            2,
+            3,
+            0
+          ],
+          "prob": 0.6832020282745361
+        },
+        {
+          "class_id": 2,
+          "perm": [
+            0,
+            2,
+            1,
+            3
+          ],
+          "prob": 0.0890546441078186
+        },
+        {
+          "class_id": 14,
+          "perm": [
+            2,
+            1,
+            0,
+            3
+          ],
+          "prob": 0.05968724936246872
+        }
+      ]
+    },
+    {
+      "prefix_len": 2,
+      "factor_added": [
+        2,
+        3,
+        1,
+        0
+      ],
+      "confusion_score": 0.4074210524559021,
+      "entropy_confusion_score": 0.4074210524559021,
+      "confidence_score": 0.5925789475440979,
+      "target_cross_entropy": 4.072039604187012,
+      "ground_truth_class_id": 17,
+      "burau_min_degree": 2,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 16,
+          "perm": [
+            2,
+            3,
+            0,
+            1
+          ],
+          "prob": 0.7089089751243591
+        },
+        {
+          "class_id": 18,
+          "perm": [
+            3,
+            0,
+            1,
+            2
+          ],
+          "prob": 0.11910369992256165
+        },
+        {
+          "class_id": 9,
+          "perm": [
+            1,
+            2,
+            3,
+            0
+          ],
+          "prob": 0.01983548142015934
+        }
+      ]
+    },
+    {
+      "prefix_len": 3,
+      "factor_added": [
+        3,
+        2,
+        0,
+        1
+      ],
+      "confusion_score": 0.12363485991954803,
+      "entropy_confusion_score": 0.12363485991954803,
+      "confidence_score": 0.876365140080452,
+      "target_cross_entropy": 5.588167190551758,
+      "ground_truth_class_id": 22,
+      "burau_min_degree": 4,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 16,
+          "perm": [
+            2,
+            3,
+            0,
+            1
+          ],
+          "prob": 0.9405736923217773
+        },
+        {
+          "class_id": 4,
+          "perm": [
+            0,
+            3,
+            1,
+            2
+          ],
+          "prob": 0.009761529974639416
+        },
+        {
+          "class_id": 6,
+          "perm": [
+            1,
+            0,
+            2,
+            3
+          ],
+          "prob": 0.0078398073092103
+        }
+      ]
+    },
+    {
+      "prefix_len": 4,
+      "factor_added": [
+        2,
+        1,
+        0,
+        3
+      ],
+      "confusion_score": 0.3876068592071533,
+      "entropy_confusion_score": 0.3876068592071533,
+      "confidence_score": 0.6123931407928467,
+      "target_cross_entropy": 3.2396178245544434,
+      "ground_truth_class_id": 14,
+      "burau_min_degree": 4,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 9,
+          "perm": [
+            1,
+            2,
+            3,
+            0
+          ],
+          "prob": 0.7409378886222839
+        },
+        {
+          "class_id": 2,
+          "perm": [
+            0,
+            2,
+            1,
+            3
+          ],
+          "prob": 0.05686687305569649
+        },
+        {
+          "class_id": 12,
+          "perm": [
+            2,
+            0,
+            1,
+            3
+          ],
+          "prob": 0.04875840246677399
+        }
+      ]
+    },
+    {
+      "prefix_len": 5,
+      "factor_added": [
+        2,
+        1,
+        3,
+        0
+      ],
+      "confusion_score": 0.5587236881256104,
+      "entropy_confusion_score": 0.5587236881256104,
+      "confidence_score": 0.44127631187438965,
+      "target_cross_entropy": 5.436064720153809,
+      "ground_truth_class_id": 15,
+      "burau_min_degree": 5,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 1,
+          "perm": [
+            0,
+            1,
+            3,
+            2
+          ],
+          "prob": 0.5648406744003296
+        },
+        {
+          "class_id": 6,
+          "perm": [
+            1,
+            0,
+            2,
+            3
+          ],
+          "prob": 0.09307405352592468
+        },
+        {
+          "class_id": 8,
+          "perm": [
+            1,
+            2,
+            0,
+            3
+          ],
+          "prob": 0.07328266650438309
+        }
+      ]
+    },
+    {
+      "prefix_len": 6,
+      "factor_added": [
+        3,
+        1,
+        0,
+        2
+      ],
+      "confusion_score": 0.2404361218214035,
+      "entropy_confusion_score": 0.2404361218214035,
+      "confidence_score": 0.7595638781785965,
+      "target_cross_entropy": 3.5583667755126953,
+      "ground_truth_class_id": 20,
+      "burau_min_degree": 6,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 2,
+          "perm": [
+            0,
+            2,
+            1,
+            3
+          ],
+          "prob": 0.8656800985336304
+        },
+        {
+          "class_id": 20,
+          "perm": [
+            3,
+            1,
+            0,
+            2
+          ],
+          "prob": 0.028485311195254326
+        },
+        {
+          "class_id": 9,
+          "perm": [
+            1,
+            2,
+            3,
+            0
+          ],
+          "prob": 0.014077636413276196
+        }
+      ]
+    },
+    {
+      "prefix_len": 7,
+      "factor_added": [
+        2,
+        1,
+        0,
+        3
+      ],
+      "confusion_score": 0.6548231840133667,
+      "entropy_confusion_score": 0.6548231840133667,
+      "confidence_score": 0.3451768159866333,
+      "target_cross_entropy": 1.61763334274292,
+      "ground_truth_class_id": 14,
+      "burau_min_degree": 6,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 1,
+          "perm": [
+            0,
+            1,
+            3,
+            2
+          ],
+          "prob": 0.32045724987983704
+        },
+        {
+          "class_id": 8,
+          "perm": [
+            1,
+            2,
+            0,
+            3
+          ],
+          "prob": 0.2157091498374939
+        },
+        {
+          "class_id": 14,
+          "perm": [
+            2,
+            1,
+            0,
+            3
+          ],
+          "prob": 0.1983676254749298
+        }
+      ]
+    },
+    {
+      "prefix_len": 8,
+      "factor_added": [
+        2,
+        3,
+        1,
+        0
+      ],
+      "confusion_score": 0.4101988971233368,
+      "entropy_confusion_score": 0.4101988971233368,
+      "confidence_score": 0.5898011028766632,
+      "target_cross_entropy": 3.055164337158203,
+      "ground_truth_class_id": 17,
+      "burau_min_degree": 8,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 16,
+          "perm": [
+            2,
+            3,
+            0,
+            1
+          ],
+          "prob": 0.7172006368637085
+        },
+        {
+          "class_id": 4,
+          "perm": [
+            0,
+            3,
+            1,
+            2
+          ],
+          "prob": 0.07862777262926102
+        },
+        {
+          "class_id": 17,
+          "perm": [
+            2,
+            3,
+            1,
+            0
+          ],
+          "prob": 0.04711497575044632
+        }
+      ]
+    },
+    {
+      "prefix_len": 9,
+      "factor_added": [
+        0,
+        3,
+        2,
+        1
+      ],
+      "confusion_score": 0.6919418573379517,
+      "entropy_confusion_score": 0.6919418573379517,
+      "confidence_score": 0.30805814266204834,
+      "target_cross_entropy": 3.2910752296447754,
+      "ground_truth_class_id": 5,
+      "burau_min_degree": 8,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 12,
+          "perm": [
+            2,
+            0,
+            1,
+            3
+          ],
+          "prob": 0.37141767144203186
+        },
+        {
+          "class_id": 2,
+          "perm": [
+            0,
+            2,
+            1,
+            3
+          ],
+          "prob": 0.14448067545890808
+        },
+        {
+          "class_id": 14,
+          "perm": [
+            2,
+            1,
+            0,
+            3
+          ],
+          "prob": 0.11499731987714767
+        }
+      ]
+    },
+    {
+      "prefix_len": 10,
+      "factor_added": [
+        3,
+        2,
+        0,
+        1
+      ],
+      "confusion_score": 0.41064658761024475,
+      "entropy_confusion_score": 0.41064658761024475,
+      "confidence_score": 0.5893534123897552,
+      "target_cross_entropy": 3.584890127182007,
+      "ground_truth_class_id": 22,
+      "burau_min_degree": 10,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 6,
+          "perm": [
+            1,
+            0,
+            2,
+            3
+          ],
+          "prob": 0.5164718627929688
+        },
+        {
+          "class_id": 4,
+          "perm": [
+            0,
+            3,
+            1,
+            2
+          ],
+          "prob": 0.35351863503456116
+        },
+        {
+          "class_id": 22,
+          "perm": [
+            3,
+            2,
+            0,
+            1
+          ],
+          "prob": 0.027739712968468666
+        }
+      ]
+    },
+    {
+      "prefix_len": 11,
+      "factor_added": [
+        2,
+        1,
+        0,
+        3
+      ],
+      "confusion_score": 0.3553413152694702,
+      "entropy_confusion_score": 0.3553413152694702,
+      "confidence_score": 0.6446586847305298,
+      "target_cross_entropy": 0.3947080373764038,
+      "ground_truth_class_id": 14,
+      "burau_min_degree": 10,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 14,
+          "perm": [
+            2,
+            1,
+            0,
+            3
+          ],
+          "prob": 0.6738767623901367
+        },
+        {
+          "class_id": 8,
+          "perm": [
+            1,
+            2,
+            0,
+            3
+          ],
+          "prob": 0.16933558881282806
+        },
+        {
+          "class_id": 2,
+          "perm": [
+            0,
+            2,
+            1,
+            3
+          ],
+          "prob": 0.0967574268579483
+        }
+      ]
+    },
+    {
+      "prefix_len": 12,
+      "factor_added": [
+        2,
+        1,
+        3,
+        0
+      ],
+      "confusion_score": 0.4753599762916565,
+      "entropy_confusion_score": 0.4753599762916565,
+      "confidence_score": 0.5246400237083435,
+      "target_cross_entropy": 4.828395843505859,
+      "ground_truth_class_id": 15,
+      "burau_min_degree": 11,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 1,
+          "perm": [
+            0,
+            1,
+            3,
+            2
+          ],
+          "prob": 0.608441174030304
+        },
+        {
+          "class_id": 6,
+          "perm": [
+            1,
+            0,
+            2,
+            3
+          ],
+          "prob": 0.16856004297733307
+        },
+        {
+          "class_id": 8,
+          "perm": [
+            1,
+            2,
+            0,
+            3
+          ],
+          "prob": 0.0566326268017292
+        }
+      ]
+    },
+    {
+      "prefix_len": 13,
+      "factor_added": [
+        1,
+        3,
+        2,
+        0
+      ],
+      "confusion_score": 0.31139665842056274,
+      "entropy_confusion_score": 0.31139665842056274,
+      "confidence_score": 0.6886033415794373,
+      "target_cross_entropy": 0.21755200624465942,
+      "ground_truth_class_id": 11,
+      "burau_min_degree": 12,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 11,
+          "perm": [
+            1,
+            3,
+            2,
+            0
+          ],
+          "prob": 0.8044857382774353
+        },
+        {
+          "class_id": 4,
+          "perm": [
+            0,
+            3,
+            1,
+            2
+          ],
+          "prob": 0.042409684509038925
+        },
+        {
+          "class_id": 2,
+          "perm": [
+            0,
+            2,
+            1,
+            3
+          ],
+          "prob": 0.04140571877360344
+        }
+      ]
+    },
+    {
+      "prefix_len": 14,
+      "factor_added": [
+        3,
+        2,
+        0,
+        1
+      ],
+      "confusion_score": 0.6303034424781799,
+      "entropy_confusion_score": 0.6303034424781799,
+      "confidence_score": 0.36969655752182007,
+      "target_cross_entropy": 3.5822482109069824,
+      "ground_truth_class_id": 22,
+      "burau_min_degree": 14,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 4,
+          "perm": [
+            0,
+            3,
+            1,
+            2
+          ],
+          "prob": 0.27456438541412354
+        },
+        {
+          "class_id": 8,
+          "perm": [
+            1,
+            2,
+            0,
+            3
+          ],
+          "prob": 0.2571779787540436
+        },
+        {
+          "class_id": 6,
+          "perm": [
+            1,
+            0,
+            2,
+            3
+          ],
+          "prob": 0.21818678081035614
+        }
+      ]
+    },
+    {
+      "prefix_len": 15,
+      "factor_added": [
+        2,
+        3,
+        1,
+        0
+      ],
+      "confusion_score": 0.613663375377655,
+      "entropy_confusion_score": 0.613663375377655,
+      "confidence_score": 0.38633662462234497,
+      "target_cross_entropy": 3.0607657432556152,
+      "ground_truth_class_id": 17,
+      "burau_min_degree": 16,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 3,
+          "perm": [
+            0,
+            2,
+            3,
+            1
+          ],
+          "prob": 0.466799795627594
+        },
+        {
+          "class_id": 12,
+          "perm": [
+            2,
+            0,
+            1,
+            3
+          ],
+          "prob": 0.19842061400413513
+        },
+        {
+          "class_id": 8,
+          "perm": [
+            1,
+            2,
+            0,
+            3
+          ],
+          "prob": 0.04876133054494858
+        }
+      ]
+    },
+    {
+      "prefix_len": 16,
+      "factor_added": [
+        0,
+        3,
+        2,
+        1
+      ],
+      "confusion_score": 0.7224979400634766,
+      "entropy_confusion_score": 0.7224979400634766,
+      "confidence_score": 0.27750205993652344,
+      "target_cross_entropy": 4.3614983558654785,
+      "ground_truth_class_id": 5,
+      "burau_min_degree": 16,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 12,
+          "perm": [
+            2,
+            0,
+            1,
+            3
+          ],
+          "prob": 0.2682083249092102
+        },
+        {
+          "class_id": 4,
+          "perm": [
+            0,
+            3,
+            1,
+            2
+          ],
+          "prob": 0.24977757036685944
+        },
+        {
+          "class_id": 20,
+          "perm": [
+            3,
+            1,
+            0,
+            2
+          ],
+          "prob": 0.13596469163894653
+        }
+      ]
+    },
+    {
+      "prefix_len": 17,
+      "factor_added": [
+        0,
+        3,
+        2,
+        1
+      ],
+      "confusion_score": 0.48734167218208313,
+      "entropy_confusion_score": 0.48734167218208313,
+      "confidence_score": 0.5126583278179169,
+      "target_cross_entropy": 2.447094678878784,
+      "ground_truth_class_id": 5,
+      "burau_min_degree": 16,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 1,
+          "perm": [
+            0,
+            1,
+            3,
+            2
+          ],
+          "prob": 0.5546677708625793
+        },
+        {
+          "class_id": 3,
+          "perm": [
+            0,
+            2,
+            3,
+            1
+          ],
+          "prob": 0.1791033297777176
+        },
+        {
+          "class_id": 5,
+          "perm": [
+            0,
+            3,
+            2,
+            1
+          ],
+          "prob": 0.08654465526342392
+        }
+      ]
+    },
+    {
+      "prefix_len": 18,
+      "factor_added": [
+        0,
+        3,
+        2,
+        1
+      ],
+      "confusion_score": 0.27774229645729065,
+      "entropy_confusion_score": 0.27774229645729065,
+      "confidence_score": 0.7222577035427094,
+      "target_cross_entropy": 4.4000020027160645,
+      "ground_truth_class_id": 5,
+      "burau_min_degree": 16,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 18,
+          "perm": [
+            3,
+            0,
+            1,
+            2
+          ],
+          "prob": 0.8161152601242065
+        },
+        {
+          "class_id": 20,
+          "perm": [
+            3,
+            1,
+            0,
+            2
+          ],
+          "prob": 0.0653117299079895
+        },
+        {
+          "class_id": 2,
+          "perm": [
+            0,
+            2,
+            1,
+            3
+          ],
+          "prob": 0.044290706515312195
+        }
+      ]
+    },
+    {
+      "prefix_len": 19,
+      "factor_added": [
+        0,
+        3,
+        2,
+        1
+      ],
+      "confusion_score": 0.296855628490448,
+      "entropy_confusion_score": 0.296855628490448,
+      "confidence_score": 0.703144371509552,
+      "target_cross_entropy": 4.342514514923096,
+      "ground_truth_class_id": 5,
+      "burau_min_degree": 16,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 12,
+          "perm": [
+            2,
+            0,
+            1,
+            3
+          ],
+          "prob": 0.7991477847099304
+        },
+        {
+          "class_id": 18,
+          "perm": [
+            3,
+            0,
+            1,
+            2
+          ],
+          "prob": 0.09265676140785217
+        },
+        {
+          "class_id": 21,
+          "perm": [
+            3,
+            1,
+            2,
+            0
+          ],
+          "prob": 0.019358227029442787
+        }
+      ]
+    },
+    {
+      "prefix_len": 20,
+      "factor_added": [
+        0,
+        3,
+        2,
+        1
+      ],
+      "confusion_score": 0.1676435023546219,
+      "entropy_confusion_score": 0.1676435023546219,
+      "confidence_score": 0.8323564976453781,
+      "target_cross_entropy": 4.8597235679626465,
+      "ground_truth_class_id": 5,
+      "burau_min_degree": 16,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 18,
+          "perm": [
+            3,
+            0,
+            1,
+            2
+          ],
+          "prob": 0.9142836332321167
+        },
+        {
+          "class_id": 2,
+          "perm": [
+            0,
+            2,
+            1,
+            3
+          ],
+          "prob": 0.015054535120725632
+        },
+        {
+          "class_id": 20,
+          "perm": [
+            3,
+            1,
+            0,
+            2
+          ],
+          "prob": 0.013010412454605103
+        }
+      ]
+    },
+    {
+      "prefix_len": 21,
+      "factor_added": [
+        0,
+        3,
+        2,
+        1
+      ],
+      "confusion_score": 0.38098517060279846,
+      "entropy_confusion_score": 0.38098517060279846,
+      "confidence_score": 0.6190148293972015,
+      "target_cross_entropy": 4.2061309814453125,
+      "ground_truth_class_id": 5,
+      "burau_min_degree": 16,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 18,
+          "perm": [
+            3,
+            0,
+            1,
+            2
+          ],
+          "prob": 0.7608258128166199
+        },
+        {
+          "class_id": 12,
+          "perm": [
+            2,
+            0,
+            1,
+            3
+          ],
+          "prob": 0.03698240965604782
+        },
+        {
+          "class_id": 2,
+          "perm": [
+            0,
+            2,
+            1,
+            3
+          ],
+          "prob": 0.03147810325026512
+        }
+      ]
+    },
+    {
+      "prefix_len": 22,
+      "factor_added": [
+        3,
+        0,
+        2,
+        1
+      ],
+      "confusion_score": 0.5163268446922302,
+      "entropy_confusion_score": 0.5163268446922302,
+      "confidence_score": 0.4836731553077698,
+      "target_cross_entropy": 1.0845115184783936,
+      "ground_truth_class_id": 19,
+      "burau_min_degree": 17,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 18,
+          "perm": [
+            3,
+            0,
+            1,
+            2
+          ],
+          "prob": 0.38679468631744385
+        },
+        {
+          "class_id": 19,
+          "perm": [
+            3,
+            0,
+            2,
+            1
+          ],
+          "prob": 0.3380669057369232
+        },
+        {
+          "class_id": 12,
+          "perm": [
+            2,
+            0,
+            1,
+            3
+          ],
+          "prob": 0.11713236570358276
+        }
+      ]
+    },
+    {
+      "prefix_len": 23,
+      "factor_added": [
+        3,
+        1,
+        0,
+        2
+      ],
+      "confusion_score": 0.2987408936023712,
+      "entropy_confusion_score": 0.2987408936023712,
+      "confidence_score": 0.7012591063976288,
+      "target_cross_entropy": 0.3462275564670563,
+      "ground_truth_class_id": 20,
+      "burau_min_degree": 18,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 20,
+          "perm": [
+            3,
+            1,
+            0,
+            2
+          ],
+          "prob": 0.7073515057563782
+        },
+        {
+          "class_id": 8,
+          "perm": [
+            1,
+            2,
+            0,
+            3
+          ],
+          "prob": 0.2237134575843811
+        },
+        {
+          "class_id": 2,
+          "perm": [
+            0,
+            2,
+            1,
+            3
+          ],
+          "prob": 0.01410922221839428
+        }
+      ]
+    },
+    {
+      "prefix_len": 24,
+      "factor_added": [
+        2,
+        3,
+        1,
+        0
+      ],
+      "confusion_score": 0.31704410910606384,
+      "entropy_confusion_score": 0.31704410910606384,
+      "confidence_score": 0.6829558908939362,
+      "target_cross_entropy": 0.6099344491958618,
+      "ground_truth_class_id": 17,
+      "burau_min_degree": 20,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 17,
+          "perm": [
+            2,
+            3,
+            1,
+            0
+          ],
+          "prob": 0.5433864593505859
+        },
+        {
+          "class_id": 8,
+          "perm": [
+            1,
+            2,
+            0,
+            3
+          ],
+          "prob": 0.3975541889667511
+        },
+        {
+          "class_id": 9,
+          "perm": [
+            1,
+            2,
+            3,
+            0
+          ],
+          "prob": 0.01680810935795307
+        }
+      ]
+    },
+    {
+      "prefix_len": 25,
+      "factor_added": [
+        0,
+        3,
+        2,
+        1
+      ],
+      "confusion_score": 0.2783537209033966,
+      "entropy_confusion_score": 0.2783537209033966,
+      "confidence_score": 0.7216462790966034,
+      "target_cross_entropy": 3.956651449203491,
+      "ground_truth_class_id": 5,
+      "burau_min_degree": 20,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 1,
+          "perm": [
+            0,
+            1,
+            3,
+            2
+          ],
+          "prob": 0.7138493657112122
+        },
+        {
+          "class_id": 3,
+          "perm": [
+            0,
+            2,
+            3,
+            1
+          ],
+          "prob": 0.22992093861103058
+        },
+        {
+          "class_id": 5,
+          "perm": [
+            0,
+            3,
+            2,
+            1
+          ],
+          "prob": 0.019127054139971733
+        }
+      ]
+    },
+    {
+      "prefix_len": 26,
+      "factor_added": [
+        0,
+        3,
+        2,
+        1
+      ],
+      "confusion_score": 0.48173585534095764,
+      "entropy_confusion_score": 0.48173585534095764,
+      "confidence_score": 0.5182641446590424,
+      "target_cross_entropy": 1.1262809038162231,
+      "ground_truth_class_id": 5,
+      "burau_min_degree": 20,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 4,
+          "perm": [
+            0,
+            3,
+            1,
+            2
+          ],
+          "prob": 0.3758474290370941
+        },
+        {
+          "class_id": 5,
+          "perm": [
+            0,
+            3,
+            2,
+            1
+          ],
+          "prob": 0.3242368996143341
+        },
+        {
+          "class_id": 2,
+          "perm": [
+            0,
+            2,
+            1,
+            3
+          ],
+          "prob": 0.20777378976345062
+        }
+      ]
+    },
+    {
+      "prefix_len": 27,
+      "factor_added": [
+        3,
+        0,
+        2,
+        1
+      ],
+      "confusion_score": 0.4322079122066498,
+      "entropy_confusion_score": 0.4322079122066498,
+      "confidence_score": 0.5677920877933502,
+      "target_cross_entropy": 0.9800983667373657,
+      "ground_truth_class_id": 19,
+      "burau_min_degree": 21,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 19,
+          "perm": [
+            3,
+            0,
+            2,
+            1
+          ],
+          "prob": 0.3752741813659668
+        },
+        {
+          "class_id": 13,
+          "perm": [
+            2,
+            0,
+            3,
+            1
+          ],
+          "prob": 0.3615972101688385
+        },
+        {
+          "class_id": 1,
+          "perm": [
+            0,
+            1,
+            3,
+            2
+          ],
+          "prob": 0.20881660282611847
+        }
+      ]
+    },
+    {
+      "prefix_len": 28,
+      "factor_added": [
+        3,
+        1,
+        2,
+        0
+      ],
+      "confusion_score": 0.09165891259908676,
+      "entropy_confusion_score": 0.09165891259908676,
+      "confidence_score": 0.9083410874009132,
+      "target_cross_entropy": 0.048532821238040924,
+      "ground_truth_class_id": 21,
+      "burau_min_degree": 23,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 21,
+          "perm": [
+            3,
+            1,
+            2,
+            0
+          ],
+          "prob": 0.9526260495185852
+        },
+        {
+          "class_id": 3,
+          "perm": [
+            0,
+            2,
+            3,
+            1
+          ],
+          "prob": 0.023406796157360077
+        },
+        {
+          "class_id": 12,
+          "perm": [
+            2,
+            0,
+            1,
+            3
+          ],
+          "prob": 0.0051557100377976894
+        }
+      ]
+    },
+    {
+      "prefix_len": 29,
+      "factor_added": [
+        3,
+        1,
+        0,
+        2
+      ],
+      "confusion_score": 0.1339915245771408,
+      "entropy_confusion_score": 0.1339915245771408,
+      "confidence_score": 0.8660084754228592,
+      "target_cross_entropy": 0.08267910778522491,
+      "ground_truth_class_id": 20,
+      "burau_min_degree": 24,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 20,
+          "perm": [
+            3,
+            1,
+            0,
+            2
+          ],
+          "prob": 0.9206465482711792
+        },
+        {
+          "class_id": 18,
+          "perm": [
+            3,
+            0,
+            1,
+            2
+          ],
+          "prob": 0.045278020203113556
+        },
+        {
+          "class_id": 2,
+          "perm": [
+            0,
+            2,
+            1,
+            3
+          ],
+          "prob": 0.008809410035610199
+        }
+      ]
+    },
+    {
+      "prefix_len": 30,
+      "factor_added": [
+        2,
+        1,
+        3,
+        0
+      ],
+      "confusion_score": 0.3980851173400879,
+      "entropy_confusion_score": 0.3980851173400879,
+      "confidence_score": 0.6019148826599121,
+      "target_cross_entropy": 0.7860656976699829,
+      "ground_truth_class_id": 15,
+      "burau_min_degree": 25,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 15,
+          "perm": [
+            2,
+            1,
+            3,
+            0
+          ],
+          "prob": 0.45563387870788574
+        },
+        {
+          "class_id": 3,
+          "perm": [
+            0,
+            2,
+            3,
+            1
+          ],
+          "prob": 0.37167492508888245
+        },
+        {
+          "class_id": 9,
+          "perm": [
+            1,
+            2,
+            3,
+            0
+          ],
+          "prob": 0.12426108866930008
+        }
+      ]
+    },
+    {
+      "prefix_len": 31,
+      "factor_added": [
+        3,
+        1,
+        0,
+        2
+      ],
+      "confusion_score": 0.1970791220664978,
+      "entropy_confusion_score": 0.1970791220664978,
+      "confidence_score": 0.8029208779335022,
+      "target_cross_entropy": 2.022740125656128,
+      "ground_truth_class_id": 20,
+      "burau_min_degree": 26,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 18,
+          "perm": [
+            3,
+            0,
+            1,
+            2
+          ],
+          "prob": 0.8353641033172607
+        },
+        {
+          "class_id": 20,
+          "perm": [
+            3,
+            1,
+            0,
+            2
+          ],
+          "prob": 0.1322924643754959
+        },
+        {
+          "class_id": 2,
+          "perm": [
+            0,
+            2,
+            1,
+            3
+          ],
+          "prob": 0.0038316911086440086
+        }
+      ]
+    },
+    {
+      "prefix_len": 32,
+      "factor_added": [
+        2,
+        1,
+        0,
+        3
+      ],
+      "confusion_score": 0.30023571848869324,
+      "entropy_confusion_score": 0.30023571848869324,
+      "confidence_score": 0.6997642815113068,
+      "target_cross_entropy": 1.1547636985778809,
+      "ground_truth_class_id": 14,
+      "burau_min_degree": 26,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 8,
+          "perm": [
+            1,
+            2,
+            0,
+            3
+          ],
+          "prob": 0.6332693099975586
+        },
+        {
+          "class_id": 14,
+          "perm": [
+            2,
+            1,
+            0,
+            3
+          ],
+          "prob": 0.3151320219039917
+        },
+        {
+          "class_id": 6,
+          "perm": [
+            1,
+            0,
+            2,
+            3
+          ],
+          "prob": 0.009579692035913467
+        }
+      ]
+    },
+    {
+      "prefix_len": 33,
+      "factor_added": [
+        2,
+        3,
+        1,
+        0
+      ],
+      "confusion_score": 0.08819065243005753,
+      "entropy_confusion_score": 0.08819065243005753,
+      "confidence_score": 0.9118093475699425,
+      "target_cross_entropy": 4.1535234451293945,
+      "ground_truth_class_id": 17,
+      "burau_min_degree": 28,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 16,
+          "perm": [
+            2,
+            3,
+            0,
+            1
+          ],
+          "prob": 0.9581303000450134
+        },
+        {
+          "class_id": 17,
+          "perm": [
+            2,
+            3,
+            1,
+            0
+          ],
+          "prob": 0.015708966180682182
+        },
+        {
+          "class_id": 9,
+          "perm": [
+            1,
+            2,
+            3,
+            0
+          ],
+          "prob": 0.002397962147369981
+        }
+      ]
+    },
+    {
+      "prefix_len": 34,
+      "factor_added": [
+        0,
+        3,
+        2,
+        1
+      ],
+      "confusion_score": 0.06283196061849594,
+      "entropy_confusion_score": 0.06283196061849594,
+      "confidence_score": 0.9371680393815041,
+      "target_cross_entropy": 5.631803512573242,
+      "ground_truth_class_id": 5,
+      "burau_min_degree": 28,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 3,
+          "perm": [
+            0,
+            2,
+            3,
+            1
+          ],
+          "prob": 0.9737461805343628
+        },
+        {
+          "class_id": 5,
+          "perm": [
+            0,
+            3,
+            2,
+            1
+          ],
+          "prob": 0.0035821092315018177
+        },
+        {
+          "class_id": 1,
+          "perm": [
+            0,
+            1,
+            3,
+            2
+          ],
+          "prob": 0.0029015291947871447
+        }
+      ]
+    },
+    {
+      "prefix_len": 35,
+      "factor_added": [
+        3,
+        2,
+        0,
+        1
+      ],
+      "confusion_score": 0.06661199778318405,
+      "entropy_confusion_score": 0.06661199778318405,
+      "confidence_score": 0.933388002216816,
+      "target_cross_entropy": 5.500593185424805,
+      "ground_truth_class_id": 22,
+      "burau_min_degree": 30,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 18,
+          "perm": [
+            3,
+            0,
+            1,
+            2
+          ],
+          "prob": 0.9720962047576904
+        },
+        {
+          "class_id": 22,
+          "perm": [
+            3,
+            2,
+            0,
+            1
+          ],
+          "prob": 0.004084347281605005
+        },
+        {
+          "class_id": 20,
+          "perm": [
+            3,
+            1,
+            0,
+            2
+          ],
+          "prob": 0.001698836567811668
+        }
+      ]
+    },
+    {
+      "prefix_len": 36,
+      "factor_added": [
+        2,
+        1,
+        0,
+        3
+      ],
+      "confusion_score": 0.25060489773750305,
+      "entropy_confusion_score": 0.25060489773750305,
+      "confidence_score": 0.749395102262497,
+      "target_cross_entropy": 1.5161828994750977,
+      "ground_truth_class_id": 14,
+      "burau_min_degree": 30,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 8,
+          "perm": [
+            1,
+            2,
+            0,
+            3
+          ],
+          "prob": 0.7418636679649353
+        },
+        {
+          "class_id": 14,
+          "perm": [
+            2,
+            1,
+            0,
+            3
+          ],
+          "prob": 0.219548299908638
+        },
+        {
+          "class_id": 17,
+          "perm": [
+            2,
+            3,
+            1,
+            0
+          ],
+          "prob": 0.00343569228425622
+        }
+      ]
+    },
+    {
+      "prefix_len": 37,
+      "factor_added": [
+        2,
+        1,
+        0,
+        3
+      ],
+      "confusion_score": 0.12551890313625336,
+      "entropy_confusion_score": 0.12551890313625336,
+      "confidence_score": 0.8744810968637466,
+      "target_cross_entropy": 3.411134958267212,
+      "ground_truth_class_id": 14,
+      "burau_min_degree": 30,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 12,
+          "perm": [
+            2,
+            0,
+            1,
+            3
+          ],
+          "prob": 0.9316871166229248
+        },
+        {
+          "class_id": 14,
+          "perm": [
+            2,
+            1,
+            0,
+            3
+          ],
+          "prob": 0.03300372511148453
+        },
+        {
+          "class_id": 8,
+          "perm": [
+            1,
+            2,
+            0,
+            3
+          ],
+          "prob": 0.0057217031717300415
+        }
+      ]
+    },
+    {
+      "prefix_len": 38,
+      "factor_added": [
+        2,
+        3,
+        0,
+        1
+      ],
+      "confusion_score": 0.07907335460186005,
+      "entropy_confusion_score": 0.07907335460186005,
+      "confidence_score": 0.92092664539814,
+      "target_cross_entropy": 4.8894524574279785,
+      "ground_truth_class_id": 16,
+      "burau_min_degree": 32,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 17,
+          "perm": [
+            2,
+            3,
+            1,
+            0
+          ],
+          "prob": 0.9595282077789307
+        },
+        {
+          "class_id": 8,
+          "perm": [
+            1,
+            2,
+            0,
+            3
+          ],
+          "prob": 0.013149810954928398
+        },
+        {
+          "class_id": 1,
+          "perm": [
+            0,
+            1,
+            3,
+            2
+          ],
+          "prob": 0.008752956055104733
+        }
+      ]
+    },
+    {
+      "prefix_len": 39,
+      "factor_added": [
+        2,
+        0,
+        3,
+        1
+      ],
+      "confusion_score": 0.06199781596660614,
+      "entropy_confusion_score": 0.06199781596660614,
+      "confidence_score": 0.9380021840333939,
+      "target_cross_entropy": 0.025860970839858055,
+      "ground_truth_class_id": 13,
+      "burau_min_degree": 33,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 13,
+          "perm": [
+            2,
+            0,
+            3,
+            1
+          ],
+          "prob": 0.9744705557823181
+        },
+        {
+          "class_id": 19,
+          "perm": [
+            3,
+            0,
+            2,
+            1
+          ],
+          "prob": 0.0026030326262116432
+        },
+        {
+          "class_id": 1,
+          "perm": [
+            0,
+            1,
+            3,
+            2
+          ],
+          "prob": 0.002245463663712144
+        }
+      ]
+    },
+    {
+      "prefix_len": 40,
+      "factor_added": [
+        1,
+        3,
+        2,
+        0
+      ],
+      "confusion_score": 0.3145391047000885,
+      "entropy_confusion_score": 0.3145391047000885,
+      "confidence_score": 0.6854608952999115,
+      "target_cross_entropy": 0.3414721190929413,
+      "ground_truth_class_id": 11,
+      "burau_min_degree": 34,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 11,
+          "perm": [
+            1,
+            3,
+            2,
+            0
+          ],
+          "prob": 0.7107232809066772
+        },
+        {
+          "class_id": 9,
+          "perm": [
+            1,
+            2,
+            3,
+            0
+          ],
+          "prob": 0.18872201442718506
+        },
+        {
+          "class_id": 2,
+          "perm": [
+            0,
+            2,
+            1,
+            3
+          ],
+          "prob": 0.05312567949295044
+        }
+      ]
+    },
+    {
+      "prefix_len": 41,
+      "factor_added": [
+        3,
+        0,
+        2,
+        1
+      ],
+      "confusion_score": 0.3838406205177307,
+      "entropy_confusion_score": 0.3838406205177307,
+      "confidence_score": 0.6161593794822693,
+      "target_cross_entropy": 0.8207811117172241,
+      "ground_truth_class_id": 19,
+      "burau_min_degree": 35,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 19,
+          "perm": [
+            3,
+            0,
+            2,
+            1
+          ],
+          "prob": 0.44008776545524597
+        },
+        {
+          "class_id": 12,
+          "perm": [
+            2,
+            0,
+            1,
+            3
+          ],
+          "prob": 0.4129842221736908
+        },
+        {
+          "class_id": 18,
+          "perm": [
+            3,
+            0,
+            1,
+            2
+          ],
+          "prob": 0.09964613616466522
+        }
+      ]
+    },
+    {
+      "prefix_len": 42,
+      "factor_added": [
+        3,
+        1,
+        2,
+        0
+      ],
+      "confusion_score": 0.24301572144031525,
+      "entropy_confusion_score": 0.24301572144031525,
+      "confidence_score": 0.7569842785596848,
+      "target_cross_entropy": 1.8870503902435303,
+      "ground_truth_class_id": 21,
+      "burau_min_degree": 37,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 3,
+          "perm": [
+            0,
+            2,
+            3,
+            1
+          ],
+          "prob": 0.7884894013404846
+        },
+        {
+          "class_id": 21,
+          "perm": [
+            3,
+            1,
+            2,
+            0
+          ],
+          "prob": 0.1515180766582489
+        },
+        {
+          "class_id": 9,
+          "perm": [
+            1,
+            2,
+            3,
+            0
+          ],
+          "prob": 0.029102656990289688
+        }
+      ]
+    },
+    {
+      "prefix_len": 43,
+      "factor_added": [
+        3,
+        1,
+        0,
+        2
+      ],
+      "confusion_score": 0.2511012554168701,
+      "entropy_confusion_score": 0.2511012554168701,
+      "confidence_score": 0.7488987445831299,
+      "target_cross_entropy": 1.5901790857315063,
+      "ground_truth_class_id": 20,
+      "burau_min_degree": 38,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 18,
+          "perm": [
+            3,
+            0,
+            1,
+            2
+          ],
+          "prob": 0.7531716227531433
+        },
+        {
+          "class_id": 20,
+          "perm": [
+            3,
+            1,
+            0,
+            2
+          ],
+          "prob": 0.20388911664485931
+        },
+        {
+          "class_id": 2,
+          "perm": [
+            0,
+            2,
+            1,
+            3
+          ],
+          "prob": 0.008193974383175373
+        }
+      ]
+    },
+    {
+      "prefix_len": 44,
+      "factor_added": [
+        2,
+        1,
+        0,
+        3
+      ],
+      "confusion_score": 0.07825899869203568,
+      "entropy_confusion_score": 0.07825899869203568,
+      "confidence_score": 0.9217410013079643,
+      "target_cross_entropy": 5.104074001312256,
+      "ground_truth_class_id": 14,
+      "burau_min_degree": 38,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 8,
+          "perm": [
+            1,
+            2,
+            0,
+            3
+          ],
+          "prob": 0.9656358361244202
+        },
+        {
+          "class_id": 14,
+          "perm": [
+            2,
+            1,
+            0,
+            3
+          ],
+          "prob": 0.006071958225220442
+        },
+        {
+          "class_id": 6,
+          "perm": [
+            1,
+            0,
+            2,
+            3
+          ],
+          "prob": 0.004465480335056782
+        }
+      ]
+    },
+    {
+      "prefix_len": 45,
+      "factor_added": [
+        2,
+        1,
+        3,
+        0
+      ],
+      "confusion_score": 0.10670503228902817,
+      "entropy_confusion_score": 0.10670503228902817,
+      "confidence_score": 0.8932949677109718,
+      "target_cross_entropy": 3.655707359313965,
+      "ground_truth_class_id": 15,
+      "burau_min_degree": 39,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 13,
+          "perm": [
+            2,
+            0,
+            3,
+            1
+          ],
+          "prob": 0.944617509841919
+        },
+        {
+          "class_id": 15,
+          "perm": [
+            2,
+            1,
+            3,
+            0
+          ],
+          "prob": 0.025843210518360138
+        },
+        {
+          "class_id": 6,
+          "perm": [
+            1,
+            0,
+            2,
+            3
+          ],
+          "prob": 0.0038349481765180826
+        }
+      ]
+    },
+    {
+      "prefix_len": 46,
+      "factor_added": [
+        0,
+        3,
+        1,
+        2
+      ],
+      "confusion_score": 0.11120684444904327,
+      "entropy_confusion_score": 0.11120684444904327,
+      "confidence_score": 0.8887931555509567,
+      "target_cross_entropy": 0.06807851791381836,
+      "ground_truth_class_id": 4,
+      "burau_min_degree": 40,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 4,
+          "perm": [
+            0,
+            3,
+            1,
+            2
+          ],
+          "prob": 0.934187114238739
+        },
+        {
+          "class_id": 10,
+          "perm": [
+            1,
+            3,
+            0,
+            2
+          ],
+          "prob": 0.04299820587038994
+        },
+        {
+          "class_id": 8,
+          "perm": [
+            1,
+            2,
+            0,
+            3
+          ],
+          "prob": 0.0033157493453472853
+        }
+      ]
+    },
+    {
+      "prefix_len": 47,
+      "factor_added": [
+        2,
+        0,
+        3,
+        1
+      ],
+      "confusion_score": 0.061322230845689774,
+      "entropy_confusion_score": 0.061322230845689774,
+      "confidence_score": 0.9386777691543102,
+      "target_cross_entropy": 0.02537388540804386,
+      "ground_truth_class_id": 13,
+      "burau_min_degree": 41,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 13,
+          "perm": [
+            2,
+            0,
+            3,
+            1
+          ],
+          "prob": 0.9749453067779541
+        },
+        {
+          "class_id": 21,
+          "perm": [
+            3,
+            1,
+            2,
+            0
+          ],
+          "prob": 0.0019145109690725803
+        },
+        {
+          "class_id": 7,
+          "perm": [
+            1,
+            0,
+            3,
+            2
+          ],
+          "prob": 0.0018397410167381167
+        }
+      ]
+    },
+    {
+      "prefix_len": 48,
+      "factor_added": [
+        3,
+        1,
+        2,
+        0
+      ],
+      "confusion_score": 0.058606237173080444,
+      "entropy_confusion_score": 0.058606237173080444,
+      "confidence_score": 0.9413937628269196,
+      "target_cross_entropy": 0.024209819734096527,
+      "ground_truth_class_id": 21,
+      "burau_min_degree": 43,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 21,
+          "perm": [
+            3,
+            1,
+            2,
+            0
+          ],
+          "prob": 0.9760808944702148
+        },
+        {
+          "class_id": 18,
+          "perm": [
+            3,
+            0,
+            1,
+            2
+          ],
+          "prob": 0.002329324372112751
+        },
+        {
+          "class_id": 3,
+          "perm": [
+            0,
+            2,
+            3,
+            1
+          ],
+          "prob": 0.0017090421169996262
+        }
+      ]
+    },
+    {
+      "prefix_len": 49,
+      "factor_added": [
+        1,
+        0,
+        3,
+        2
+      ],
+      "confusion_score": 0.05507637560367584,
+      "entropy_confusion_score": 0.05507637560367584,
+      "confidence_score": 0.9449236243963242,
+      "target_cross_entropy": 0.02270534448325634,
+      "ground_truth_class_id": 7,
+      "burau_min_degree": 43,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 7,
+          "perm": [
+            1,
+            0,
+            3,
+            2
+          ],
+          "prob": 0.9775505065917969
+        },
+        {
+          "class_id": 6,
+          "perm": [
+            1,
+            0,
+            2,
+            3
+          ],
+          "prob": 0.00367441913112998
+        },
+        {
+          "class_id": 10,
+          "perm": [
+            1,
+            3,
+            0,
+            2
+          ],
+          "prob": 0.00114534143358469
+        }
+      ]
+    },
+    {
+      "prefix_len": 50,
+      "factor_added": [
+        3,
+        1,
+        0,
+        2
+      ],
+      "confusion_score": 0.1931525617837906,
+      "entropy_confusion_score": 0.1931525617837906,
+      "confidence_score": 0.8068474382162094,
+      "target_cross_entropy": 0.15314888954162598,
+      "ground_truth_class_id": 20,
+      "burau_min_degree": 44,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 20,
+          "perm": [
+            3,
+            1,
+            0,
+            2
+          ],
+          "prob": 0.8580019474029541
+        },
+        {
+          "class_id": 18,
+          "perm": [
+            3,
+            0,
+            1,
+            2
+          ],
+          "prob": 0.09941574931144714
+        },
+        {
+          "class_id": 2,
+          "perm": [
+            0,
+            2,
+            1,
+            3
+          ],
+          "prob": 0.007871595211327076
+        }
+      ]
+    },
+    {
+      "prefix_len": 51,
+      "factor_added": [
+        2,
+        1,
+        0,
+        3
+      ],
+      "confusion_score": 0.04529121518135071,
+      "entropy_confusion_score": 0.04529121518135071,
+      "confidence_score": 0.9547087848186493,
+      "target_cross_entropy": 0.01872446946799755,
+      "ground_truth_class_id": 14,
+      "burau_min_degree": 44,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 14,
+          "perm": [
+            2,
+            1,
+            0,
+            3
+          ],
+          "prob": 0.9814497232437134
+        },
+        {
+          "class_id": 6,
+          "perm": [
+            1,
+            0,
+            2,
+            3
+          ],
+          "prob": 0.0046927775256335735
+        },
+        {
+          "class_id": 16,
+          "perm": [
+            2,
+            3,
+            0,
+            1
+          ],
+          "prob": 0.0014149382477626204
+        }
+      ]
+    },
+    {
+      "prefix_len": 52,
+      "factor_added": [
+        2,
+        3,
+        0,
+        1
+      ],
+      "confusion_score": 0.05523642152547836,
+      "entropy_confusion_score": 0.05523642152547836,
+      "confidence_score": 0.9447635784745216,
+      "target_cross_entropy": 0.022907277569174767,
+      "ground_truth_class_id": 16,
+      "burau_min_degree": 46,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 16,
+          "perm": [
+            2,
+            3,
+            0,
+            1
+          ],
+          "prob": 0.9773530960083008
+        },
+        {
+          "class_id": 17,
+          "perm": [
+            2,
+            3,
+            1,
+            0
+          ],
+          "prob": 0.003792427247390151
+        },
+        {
+          "class_id": 8,
+          "perm": [
+            1,
+            2,
+            0,
+            3
+          ],
+          "prob": 0.0018489900976419449
+        }
+      ]
+    },
+    {
+      "prefix_len": 53,
+      "factor_added": [
+        0,
+        2,
+        3,
+        1
+      ],
+      "confusion_score": 0.05506553873419762,
+      "entropy_confusion_score": 0.05506553873419762,
+      "confidence_score": 0.9449344612658024,
+      "target_cross_entropy": 0.022465607151389122,
+      "ground_truth_class_id": 3,
+      "burau_min_degree": 46,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 3,
+          "perm": [
+            0,
+            2,
+            3,
+            1
+          ],
+          "prob": 0.9777848720550537
+        },
+        {
+          "class_id": 1,
+          "perm": [
+            0,
+            1,
+            3,
+            2
+          ],
+          "prob": 0.002076545497402549
+        },
+        {
+          "class_id": 4,
+          "perm": [
+            0,
+            3,
+            1,
+            2
+          ],
+          "prob": 0.001542411046102643
+        }
+      ]
+    },
+    {
+      "prefix_len": 54,
+      "factor_added": [
+        3,
+        0,
+        1,
+        2
+      ],
+      "confusion_score": 0.0724097341299057,
+      "entropy_confusion_score": 0.0724097341299057,
+      "confidence_score": 0.9275902658700943,
+      "target_cross_entropy": 0.03213373199105263,
+      "ground_truth_class_id": 18,
+      "burau_min_degree": 47,
+      "truncated_terms": 0,
+      "top_predictions": [
+        {
+          "class_id": 18,
+          "perm": [
+            3,
+            0,
+            1,
+            2
+          ],
+          "prob": 0.9683770537376404
+        },
+        {
+          "class_id": 19,
+          "perm": [
+            3,
+            0,
+            2,
+            1
+          ],
+          "prob": 0.007568339817225933
+        },
+        {
+          "class_id": 1,
+          "perm": [
+            0,
+            1,
+            3,
+            2
+          ],
+          "prob": 0.0025807837955653667
+        }
+      ]
+    }
+  ],
+  "source_gnf_path": "/nfs/roberts/project/pi_com36/com36/burau-experiments/braidmod/artifacts/length54_confusion_suite_D140_e20/random_02_gnf.json"
+}

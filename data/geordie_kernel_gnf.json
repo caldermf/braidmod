@@ -1,5 +1,5 @@
 {
-  "source_word_path": "geordie_kernel.txt",
+  "source_word_path": "data/geordie_kernel.txt",
   "artin_word": [
     1,
     3,

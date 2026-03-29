@@ -142,7 +142,7 @@ def plot_overlay(
     ax.set_xlabel("Garside Prefix Length")
     if mode == "avg5":
         ylabel = f"Target Cross-Entropy Avg{window}"
-        title = "Kernel Hits vs Random Length-54 Elements: Target Cross-Entropy Avg5"
+        title = f"Kernel Hits vs Random Length-54 Elements: Target Cross-Entropy Avg{window}"
     else:
         ylabel = "Target Cross-Entropy"
         title = "Kernel Hits vs Random Length-54 Elements: Target Cross-Entropy"

@@ -1,0 +1,29 @@
+{
+  "cases": [
+    {
+      "name": "geordie_kernel",
+      "gnf_path": "/nfs/roberts/project/pi_com36/com36/burau-experiments/braidmod/artifacts/length54_confusion_suite_transformer_tuned_factoronly_base_noema/geordie_kernel_gnf.json"
+    },
+    {
+      "name": "random_01",
+      "gnf_path": "/nfs/roberts/project/pi_com36/com36/burau-experiments/braidmod/artifacts/length54_confusion_suite_transformer_tuned_factoronly_base_noema/random_01_gnf.json"
+    },
+    {
+      "name": "random_02",
+      "gnf_path": "/nfs/roberts/project/pi_com36/com36/burau-experiments/braidmod/artifacts/length54_confusion_suite_transformer_tuned_factoronly_base_noema/random_02_gnf.json"
+    },
+    {
+      "name": "random_03",
+      "gnf_path": "/nfs/roberts/project/pi_com36/com36/burau-experiments/braidmod/artifacts/length54_confusion_suite_transformer_tuned_factoronly_base_noema/random_03_gnf.json"
+    },
+    {
+      "name": "random_04",
+      "gnf_path": "/nfs/roberts/project/pi_com36/com36/burau-experiments/braidmod/artifacts/length54_confusion_suite_transformer_tuned_factoronly_base_noema/random_04_gnf.json"
+    },
+    {
+      "name": "random_05",
+      "gnf_path": "/nfs/roberts/project/pi_com36/com36/burau-experiments/braidmod/artifacts/length54_confusion_suite_transformer_tuned_factoronly_base_noema/random_05_gnf.json"
+    }
+  ],
+  "source_suite_dir": "/nfs/roberts/project/pi_com36/com36/burau-experiments/braidmod/artifacts/length54_confusion_suite_D140_e20"
+}

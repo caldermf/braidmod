@@ -10,6 +10,7 @@ slurm_logs/
 tmp_artifacts/
 tmp_artifacts_rd/
 tmp_artifacts_identity_test/
+figures/generated/
 
 # large local datasets
 data/burau_gnf_L20_p5_D96_N100000.json
