@@ -1,37 +1,116 @@
 # braidmod
 
-`braidmod` is a public research repo about a simple idea for the reduced Burau
-representation in `B_4` mod `p`:
+`braidmod` is a public research repo about the four-strand Burau faithfulness
+problem and a new machine-learning strategy for attacking it in characteristic
+`p`.
 
-1. train on an algebraic task that does **not** use kernel labels
-2. evaluate the model along prefixes of candidate braids
-3. use model confusion as a statistical guide for search
+The central idea is simple:
 
-The supervised target is the final Garside factor of the braid's left normal
-form. The input is a projectively normalized Burau tensor. The public models
-are an original MLP baseline and a stronger hierarchical transformer.
+1. do **not** train a model to predict kernel membership directly
+2. train it instead to recover a genuine algebraic feature from the Burau matrix
+3. treat the model's failure mode, or **model confusion**, as a search signal
+
+In this repo the supervised target is the final Garside factor of the braid's
+left normal form. The input is the full projectively normalized Burau tensor,
+kept as a polynomial object modulo `p` rather than specialized to isolated
+numerical values of the indeterminate.
 
 ![MLP vs transformer validation curves](figures/mlp_vs_transformer_validation.png)
 ![Average kernel-vs-random confusion overlay](figures/kernel_avg_first5_vs_random_avg15.png)
 
+## Mathematical background
+
+The reduced Burau representation is one of the classical linear representations
+of braid groups. In characteristic zero, the broad faithfulness picture is known:
+
+- it is faithful for `B_n` with `n <= 3`
+- it is unfaithful for `B_n` with `n >= 5`
+- the remaining classical open case is `B_4`
+
+That remaining `B_4` case is especially important because it is tied to the
+Jones unknot problem for closed four-braids and has served for decades as a
+testing ground for both topology and computation.
+
+Modulo primes, the four-strand problem has its own life:
+
+- Cooper and Long analyzed the reduced Burau representation modulo small
+  primes in the late 1990s, with nonfaithfulness already visible modulo `2` and
+  a kernel exhibited modulo `3`
+- Gibson, Williamson, and Yacobi later proved that four-strand Burau is
+  unfaithful modulo `5`
+- at the time of writing, and to our knowledge, no kernel elements are known
+  modulo primes `p >= 7`
+
+So characteristic `p` is not merely a toy shadow of the classical problem. It is
+already interesting in its own right, and higher primes remain almost completely
+unexplored.
+
+## Prior computational work
+
+The strategy in this repo extends two distinct ideas from earlier work.
+
+### 1. Reservoir-sampling search
+
+In the `mod 5` paper of Gibson, Williamson, and Yacobi, the key search engine
+was a reservoir-sampling method for exploring enormous streams of braid
+candidates while retaining only promising survivors. That paper did **not** use
+neural networks, but it introduced the search framework that makes large-scale
+kernel hunting practical.
+
+### 2. Descent-set confusion
+
+More recently, Williamson has described an ongoing neural-search program with
+François Charton, Ashvni Narayanan, and Oded Yacobi, building on earlier work
+with Gibson and Yacobi, in which a neural network is trained to predict the
+right descent set of the rightmost Garside factor. The `l^1` gap between the
+prediction and reality is then used as a score function:
+
+- ordinary braids should look predictable
+- unusual braids should induce larger error
+- large error, or **descent-set confusion**, becomes a search heuristic
+
+In the motivating experiments behind this repo, the Burau matrix is treated
+through specializations of the indeterminate rather than as a full Laurent
+polynomial matrix.
+
+## What is new here
+
+This repository is a new step in that program.
+
+To our knowledge, it is the first attempt to combine the model-confusion idea
+with the characteristic-`p` Burau problem while feeding the model the **entire**
+polynomial Burau tensor.
+
+More specifically, this repo changes three things at once:
+
+- it moves from characteristic zero to characteristic `p`
+- it moves from specialized evaluations of the Burau matrix to the full
+  polynomial tensor
+- it moves from predicting only a descent set to predicting the **actual final
+  Garside factor**
+
+That last change matters. The final Garside factor is a richer target than its
+descent set: the descent set is a coarse shadow of the factor, while the factor
+itself is a `24`-class object in type `A_3`.
+
 ## What this repo shows
 
 This repository is built around one claim: a model can learn honest algebraic
-structure from Burau matrices, and its uncertainty on prefixes can then be used
-as a kernel-search signal.
+structure from Burau matrices in characteristic `p`, and its uncertainty on
+prefixes can then be reused as a kernel-search signal.
 
-More concretely:
+Concretely:
 
-- the original MLP already shows that the Burau tensor contains enough
-  information to predict the final Garside factor nontrivially
-- the hierarchical transformer improves that prediction problem
-  substantially, moving from `0.7266` to `0.9388` validation factor accuracy
-- the improved predictor still exposes a useful failure mode: kernel prefixes
-  look systematically atypical under smoothed target cross-entropy
+- the original MLP already learns nontrivial last-factor structure from the Burau
+  tensor
+- a polynomial-aware transformer improves that prediction problem
+  substantially
+- the improved model still fails in a structured way on known kernel elements,
+  and that failure is visible in the confusion-score plots
 
-This is the conceptual point of the project. We are not training a kernel
-classifier. We are training a structural predictor and then using model
-confusion as the downstream mathematical signal.
+That is the conceptual point of the project. We are not training a kernel
+classifier. We are training a structural predictor and then using its surprise as
+the downstream mathematical signal.
 
 ## Results
 
@@ -41,13 +120,21 @@ confusion as the downstream mathematical signal.
 | Transformer validation loss | `0.2178` |
 | Transformer validation factor accuracy | `0.9388` |
 
-The best public model is not just a cleaner fit to the training objective. It
-also preserves the qualitative behavior we want on saved kernel examples:
+The comparison to the earlier neural line is the motivating story here. The
+specialized-value descent-set experiments were already strong enough to make
+model confusion interesting, with accuracy in roughly the `80%` range on that
+coarser task. Here the best public transformer reaches `93.88%` validation
+accuracy on the finer `24`-class final-factor problem while operating directly on
+the full characteristic-`p` polynomial tensor.
+
+Just as importantly, the best public model is not merely a cleaner fit to the
+supervised task. It also preserves the qualitative behavior we want on saved
+kernel examples:
 
 - averaged kernel-hit curves stay well above random controls under smoothing
   windows `7`, `10`, `15`, and `20`
-- the individual kernel-hit trajectories remain visibly elevated, so the effect
-  is not created by averaging alone
+- the individual kernel-hit trajectories remain visibly elevated, so the effect is
+  not created by averaging alone
 - the saved Geordie kernel word shows the same pattern most clearly in target
   cross-entropy
 
@@ -57,22 +144,33 @@ The three figures that summarize the repo best are:
 - [figures/kernel_avg_first5_vs_random_avg15.png](figures/kernel_avg_first5_vs_random_avg15.png)
 - [figures/geordie_vs_random_cumulative_xent.png](figures/geordie_vs_random_cumulative_xent.png)
 
-## Why indirect supervision
+## Why this matters for higher primes
 
-The kernel problem is hard, and direct labels are not the point of the method.
-Instead of asking a model to predict "kernel" or "not kernel", we ask it to
-recover an algebraic feature that ordinary braids should exhibit:
+The real long-term use case is not `p = 5`, where kernel elements are already
+known. The real target is `p = 7`, `11`, and beyond, where we currently have no
+known kernel elements to aim at.
 
-- input: projectively normalized Burau tensor
-- label: final Garside factor of the left normal form
+The confusion-score evolution plots in this repo are evidence that the idea is
+not confined to characteristic zero. Even in characteristic `p`, a model trained
+only on ordinary Garside data assigns systematically higher surprise to known
+kernel prefixes than to random controls. That is exactly the kind of signal one
+would want inside a reservoir-sampling search:
 
-Then we evaluate the trained model on prefixes and measure:
+- score prefixes by how atypical they look to the model
+- keep only a small weighted reservoir of promising candidates
+- spend computation on the part of braid space that looks algebraically strange
 
-- entropy of the factor distribution
-- target cross-entropy against the actual factor
-- smoothed versions of those curves along a braid
+If that phenomenon persists at higher primes, then confusion-guided reservoir
+sampling could substantially prune the search and make new kernel discoveries
+far more realistic.
 
-That is what this repo calls model confusion.
+## Model comparison
+
+| Line of work | Representation seen by the model | Prediction target | Search role |
+| --- | --- | --- | --- |
+| Gibson–Williamson–Yacobi mod `5` search | no neural model | none | reservoir sampling discovers kernel elements |
+| Earlier neural descent-set program | specialized Burau evaluations | right descent set of rightmost Garside factor | descent-set confusion guides search |
+| This repo | full mod-`p` polynomial Burau tensor | actual final Garside factor | model confusion is designed to plug into reservoir search |
 
 ## Architecture
 
@@ -87,7 +185,7 @@ Both public models consume the same structured tensor:
 
 The dataset zero-pads the polynomial out to the fixed training depth `D`. The
 transformer infers a valid-degree mask from the last occupied degree, so
-internal zero slices are still legal while trailing padding is ignored.
+internal zero slices remain legal while trailing padding is ignored.
 
 ### Original MLP baseline
 
@@ -102,7 +200,7 @@ The MLP is deliberately simple.
 
 This baseline matters because it proves the task is real. The Burau matrix is
 already informative enough that a straightforward network can recover a large
-amount of final-factor structure.
+amount of last-factor structure.
 
 ### Hierarchical transformer
 
@@ -147,7 +245,7 @@ classifier for the final Garside factor.
 
 ### Why this transformer is better than the MLP
 
-The important difference is not that the transformer is "more modern." It is
+The important difference is not that the transformer is simply "newer." It is
 that it respects the tensor's hierarchy.
 
 - The MLP only sees structure after flattening.
@@ -169,7 +267,7 @@ The main public story uses four groups of plots.
 ![Transformer training curves](figures/transformer_training_curves.png)
 ![MLP vs transformer validation comparison](figures/mlp_vs_transformer_validation.png)
 
-These show the basic modeling result: the transformer learns the factor
+These show the basic modeling result: the transformer learns the last-factor
 prediction task much more cleanly than the original MLP.
 
 ### 2. Averaged kernel-vs-random overlays
@@ -198,6 +296,15 @@ curves also stay elevated over long prefix intervals.
 
 These plots focus on the saved Geordie kernel word. Target cross-entropy is the
 cleanest signal; entropy is a weaker but still informative secondary view.
+
+## Background references
+
+- [Cooper–Long, *A presentation for the image of Burau(4) ⊗ Z2* (1997)](https://web.math.ucsb.edu/~long/pubpdf/modtwo.pdf)
+- [Cooper–Long, *On the Burau representation modulo a small prime* (1998)](https://web.math.ucsb.edu/~cooper/30.pdf)
+- [Gibson–Williamson–Yacobi, *4-Strand Burau is Unfaithful Modulo 5* (arXiv:2310.02403)](https://arxiv.org/abs/2310.02403)
+- [Geordie Williamson papers page, noting that the mod-5 work introduced a reservoir-sampling search method](https://www.maths.usyd.edu.au/u/geordie/papers.html)
+- [Williamson, *Using neural networks to search for interesting mathematical objects* (2025 slides)](https://www.maths.usyd.edu.au/u/geordie/JMM/JMM3.pdf)
+- [Yacobi, *A computational perspective on the Burau representation* (UNSW seminar abstract, June 11, 2024)](https://www.unsw.edu.au/science/our-schools/maths/engage-with-us/seminars/2024/A-computational-perspective-on-the-Burau-representation)
 
 ## Start here
 
