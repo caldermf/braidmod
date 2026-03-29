@@ -43,26 +43,28 @@ Best pilot checkpoints:
 - `artifacts/garside_transformer_tuned_factoronly_noema_pilot_L30to60_p5_D140_N200000_e10/best_model.pt`
 - `artifacts/garside_transformer_tuned_factoronly_noema_pilot_L30to60_p5_D140_N200000_e10/best_loss_model.pt`
 
-### Tuned Factor-Only Base Run (Still Running)
+### Tuned Factor-Only Base Run (Completed)
 
-Active Slurm job:
-
-- job id: `6772086`
-
-Live log:
+Completed run log:
 
 - `artifacts/garside_transformer_tuned_factoronly_base_noema_L30to60_p5_D140_N200000_e30/train.log`
 
-Latest checked metrics from the running job:
+Best completed metrics:
 
-- epoch 10: `val_loss=0.2300`, `val_factor_acc=0.9307`
-- epoch 11: `val_loss=0.2300`, `val_factor_acc=0.9333`
+- epoch 16: `val_loss=0.2179`, `val_factor_acc=0.9388` (best accuracy)
+- epoch 19: `val_loss=0.2178`, `val_factor_acc=0.9380` (best loss)
+- logged best: `best_val_loss=0.2178`, `best_val_factor_acc=0.9388`
 
-Important note:
+Best completed checkpoints:
 
-- `best_model.pt` in this directory is mutable because the job is still running.
-- I froze a snapshot at the time of handoff:
-  - `artifacts/garside_transformer_tuned_factoronly_base_noema_L30to60_p5_D140_N200000_e30/best_model_epoch11_snapshot.pt`
+- `artifacts/garside_transformer_tuned_factoronly_base_noema_L30to60_p5_D140_N200000_e30/best_model.pt`
+- `artifacts/garside_transformer_tuned_factoronly_base_noema_L30to60_p5_D140_N200000_e30/best_loss_model.pt`
+- `artifacts/garside_transformer_tuned_factoronly_base_noema_L30to60_p5_D140_N200000_e30/best_metric_model.pt`
+
+Frozen snapshots kept from the run:
+
+- `artifacts/garside_transformer_tuned_factoronly_base_noema_L30to60_p5_D140_N200000_e30/best_model_epoch10_snapshot.pt`
+- `artifacts/garside_transformer_tuned_factoronly_base_noema_L30to60_p5_D140_N200000_e30/best_model_epoch11_snapshot.pt`
 
 ## Winning Recipe
 
@@ -110,6 +112,12 @@ Files added / updated:
 - `reservoir_search_braidmod.py`
 
 This produced the Geordie/random and kernel-hit overlay plots.
+
+Latest tuned-suite rerender:
+
+- `render_length54_confusion_suite_transformer_tuned_factoronly_base.sh`
+- output directory:
+  - `artifacts/length54_confusion_suite_transformer_tuned_factoronly_base_noema`
 
 ### 3. Garside-Length Conditioning Ablation
 
@@ -181,24 +189,39 @@ These now produce decent-looking static plots for GitHub / README use.
 - old vs tuned:
   - `artifacts/garside_transformer_tuned_factoronly_noema_pilot_L30to60_p5_D140_N200000_e10/old_vs_tuned_comparison.png`
 
-### Running stronger base run
+### Completed stronger base run
 
-- mutable best:
+- best checkpoint:
   - `artifacts/garside_transformer_tuned_factoronly_base_noema_L30to60_p5_D140_N200000_e30/best_model.pt`
-- frozen snapshot:
-  - `artifacts/garside_transformer_tuned_factoronly_base_noema_L30to60_p5_D140_N200000_e30/best_model_epoch11_snapshot.pt`
-- current curves:
-  - `artifacts/garside_transformer_tuned_factoronly_base_noema_L30to60_p5_D140_N200000_e30/training_curves_current.png`
-- current old vs tuned:
+- finished curves:
+  - `artifacts/garside_transformer_tuned_factoronly_base_noema_L30to60_p5_D140_N200000_e30/training_curves.png`
+- old vs tuned:
   - `artifacts/garside_transformer_tuned_factoronly_base_noema_L30to60_p5_D140_N200000_e30/old_vs_tuned_comparison_current.png`
+
+### Tuned prefix-confusion rerender
+
+- output directory:
+  - `artifacts/length54_confusion_suite_transformer_tuned_factoronly_base_noema`
+- key plots:
+  - `artifacts/length54_confusion_suite_transformer_tuned_factoronly_base_noema/all_cases_target_cross_entropy_cumavg.png`
+  - `artifacts/length54_confusion_suite_transformer_tuned_factoronly_base_noema/kernel_hits_vs_random_target_xent_avg5_overlay.png`
+  - `artifacts/length54_confusion_suite_transformer_tuned_factoronly_base_noema/kernel_hits_vs_random_target_xent_raw_overlay.png`
+- Geordie vs random summary:
+  - mean target x-ent: Geordie `3.5939` vs random avg `2.2381`
+  - final avg5 target x-ent: Geordie `4.4776` vs random avg `1.1842`
+  - mean entropy confusion: Geordie `0.4031` vs random avg `0.2694`
+- comparison to the older epoch-6 transformer suite:
+  - target-xent separation is smaller than before
+  - entropy/confidence separation is substantially larger than before
 
 ## Current Slurm State
 
-Still running:
+Completed:
 
 - `6772086` for `train_transformer_tuned_factoronly_base_L30to60_p5_D140_N200000_e30.sh`
+- `6801405` for `render_length54_confusion_suite_transformer_tuned_factoronly_base.sh`
 
-Canceled because they lost:
+Canceled because they lost or were superseded:
 
 - `6772087` deeper factor-only run
 - earlier multitask tuned runs
@@ -206,26 +229,17 @@ Canceled because they lost:
 
 ## Recommended Next Steps
 
-1. Monitor job `6772086` until it stops improving meaningfully.
-2. Freeze the final best checkpoint with another immutable snapshot name once the job finishes.
-3. Re-render the final polished training curves from the completed `e30` run.
-4. Re-run the prefix confusion suite with the tuned factor-only checkpoint.
-5. Compare old transformer vs tuned factor-only on:
+1. Compare old transformer vs tuned factor-only on:
    - Geordie vs random prefix x-ent
+   - Geordie vs random entropy/confidence
    - kernel-hit overlays
    - search behavior if needed
-6. Update `README.md` once the final tuned run is chosen.
+2. Add direct old-vs-tuned overlay figures if we want a cleaner GitHub story.
+3. Update `README.md` once the final tuned run is chosen.
 
 ## Useful Commands For The Next Developer
 
-Monitor the running job:
-
-```bash
-squeue -j 6772086
-tail -f artifacts/garside_transformer_tuned_factoronly_base_noema_L30to60_p5_D140_N200000_e30/train.log
-```
-
-Render comparison plots after the run finishes:
+Render comparison plots from the completed run:
 
 ```bash
 /home/com36/.conda/envs/burau_gpu/bin/python plot_training_curves.py \
@@ -240,12 +254,18 @@ Render comparison plots after the run finishes:
   --title "Original Transformer vs Tuned Factor-Only Transformer"
 ```
 
-Rescore the saved prefix suite with a tuned checkpoint:
+Rescore the saved prefix suite with the tuned checkpoint:
 
 ```bash
 CHECKPOINT_PATH=/nfs/roberts/project/pi_com36/com36/burau-experiments/braidmod/artifacts/garside_transformer_tuned_factoronly_base_noema_L30to60_p5_D140_N200000_e30/best_model.pt \
 OUT_DIR=/nfs/roberts/project/pi_com36/com36/burau-experiments/braidmod/artifacts/length54_confusion_suite_transformer_tuned_factoronly \
 ./run_transformer_prefix_gpu_eval.sh
+```
+
+Or use the dedicated Slurm wrapper:
+
+```bash
+sbatch --partition=gpu_devel render_length54_confusion_suite_transformer_tuned_factoronly_base.sh
 ```
 
 ## Worktree Note
