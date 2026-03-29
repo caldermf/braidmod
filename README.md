@@ -1,130 +1,135 @@
 # braidmod
 
-`braidmod` studies a simple strategy for probing the kernel of the reduced
-Burau representation in `B_4` mod `p`:
+`braidmod` is a public research repo about a simple idea for the reduced Burau
+representation in `B_4` mod `p`:
 
-1. Train on an algebraic prediction problem that does **not** use kernel labels.
-2. Evaluate the model along prefixes of candidate braids.
-3. Use model confusion as a statistical signal for search.
+1. train on an algebraic task that does **not** use kernel labels
+2. evaluate the model along prefixes of candidate braids
+3. use model confusion as a statistical guide for search
 
-The supervised task is:
-
-- input: a projectively normalized Burau tensor
-- label: the final Garside factor of the braid's left normal form
-
-The baseline model is an MLP. The strongest public model is a hierarchical
-transformer that encodes local structure inside each `3 x 3` degree slice and
-then aggregates across degrees.
+The supervised target is the final Garside factor of the braid's left normal
+form. The input is a projectively normalized Burau tensor. The public models
+are an original MLP baseline and a stronger hierarchical transformer.
 
 ![MLP vs transformer validation curves](figures/mlp_vs_transformer_validation.png)
 ![Average kernel-vs-random confusion overlay](figures/kernel_avg_first5_vs_random_avg15.png)
 
-## Why this is interesting
+## What this repo shows
 
-The kernel problem is hard. Instead of training a classifier to say "kernel" or
-"not kernel", this repo trains models to infer honest algebraic structure from
-Burau matrices. The working hypothesis is:
+This repository is built around one claim: a model can learn honest algebraic
+structure from Burau matrices, and its uncertainty on prefixes can then be used
+as a kernel-search signal.
 
-- ordinary braids should look structurally predictable
-- kernel-like prefixes should look atypical
-- that atypicality should show up as target surprise or uncertainty
-- a search procedure can exploit that signal without direct kernel supervision
+More concretely:
 
-This turns model failure into a mathematical tool.
+- the original MLP already shows that the Burau tensor contains enough
+  information to predict the final Garside factor nontrivially
+- the hierarchical transformer improves that prediction problem
+  substantially, moving from `0.7266` to `0.9388` validation factor accuracy
+- the improved predictor still exposes a useful failure mode: kernel prefixes
+  look systematically atypical under smoothed target cross-entropy
 
-## Headline results
+This is the conceptual point of the project. We are not training a kernel
+classifier. We are training a structural predictor and then using model
+confusion as the downstream mathematical signal.
 
-- original MLP validation factor accuracy: `0.7266`
-- best transformer validation loss: `0.2178`
-- best transformer validation factor accuracy: `0.9388`
-- saved kernel prefixes remain statistically separated from random braids by
-  smoothed target cross-entropy
+## Results
 
-The most presentation-ready figures are:
+| Result | Public number |
+| --- | --- |
+| MLP validation factor accuracy | `0.7266` |
+| Transformer validation loss | `0.2178` |
+| Transformer validation factor accuracy | `0.9388` |
 
+The best public model is not just a cleaner fit to the training objective. It
+also preserves the qualitative behavior we want on saved kernel examples:
+
+- averaged kernel-hit curves stay well above random controls under smoothing
+  windows `7`, `10`, `15`, and `20`
+- the individual kernel-hit trajectories remain visibly elevated, so the effect
+  is not created by averaging alone
+- the saved Geordie kernel word shows the same pattern most clearly in target
+  cross-entropy
+
+The three figures that summarize the repo best are:
+
+- [figures/mlp_vs_transformer_validation.png](figures/mlp_vs_transformer_validation.png)
 - [figures/kernel_avg_first5_vs_random_avg15.png](figures/kernel_avg_first5_vs_random_avg15.png)
 - [figures/geordie_vs_random_cumulative_xent.png](figures/geordie_vs_random_cumulative_xent.png)
-- [figures/mlp_vs_transformer_validation.png](figures/mlp_vs_transformer_validation.png)
 
-## Model comparison
+## Why indirect supervision
 
-| Model | Input handling | Core trunk | Training target | Public metric |
-| --- | --- | --- | --- | --- |
-| MLP baseline | Embed each mod-`p` coefficient, then flatten the full `D x 3 x 3` tensor | Residual feedforward blocks | final factor + auxiliary descent class | `0.7266` val factor accuracy |
-| Best transformer | Embed coefficients as tokens, summarize each degree slice, then attend across degrees | hierarchical local/global self-attention | final factor only | `0.2178` val loss, `0.9388` val factor accuracy |
+The kernel problem is hard, and direct labels are not the point of the method.
+Instead of asking a model to predict "kernel" or "not kernel", we ask it to
+recover an algebraic feature that ordinary braids should exhibit:
 
-The transformer wins for a structural reason, not just a scaling reason. The
-Burau tensor already has a natural hierarchy:
+- input: projectively normalized Burau tensor
+- label: final Garside factor of the left normal form
 
-- inside one degree there is a small `3 x 3` matrix with local row/column structure
-- across degrees there is a polynomial support pattern with variable occupied width
+Then we evaluate the trained model on prefixes and measure:
 
-The MLP sees that tensor only after flattening. The transformer keeps both
-levels of structure explicit.
+- entropy of the factor distribution
+- target cross-entropy against the actual factor
+- smoothed versions of those curves along a braid
 
-## Shared input representation
+That is what this repo calls model confusion.
 
-Both public models consume the same projectively normalized Burau tensor:
+## Architecture
+
+### Shared representation
+
+Both public models consume the same structured tensor:
 
 - shape: `D x 3 x 3`
-- entries: integers mod `p`
+- entries: coefficients mod `p`
 - extra scalar feature: `burau_min_degree`
-- target class: one of the `24` permutations in `S_4`, representing the final
-  Garside factor
+- target class: one of the `24` permutations in `S_4`
 
-The dataset zero-pads the tensor out to the fixed training depth `D`. For the
-transformer, the code infers a valid-degree mask from the last occupied degree
-so that internal zero slices remain legal while trailing padding is ignored.
+The dataset zero-pads the polynomial out to the fixed training depth `D`. The
+transformer infers a valid-degree mask from the last occupied degree, so
+internal zero slices are still legal while trailing padding is ignored.
 
-## MLP baseline
+### Original MLP baseline
 
-The original MLP is intentionally simple.
+The MLP is deliberately simple.
 
-1. Embed each coefficient by value, degree, row, and column.
-2. Flatten the full tensor into one long vector.
+1. Embed every coefficient by value, degree, row, and column.
+2. Flatten the full tensor.
 3. Project once into a hidden state.
 4. Add a projected `burau_min_degree` feature.
-5. Pass the result through residual MLP blocks.
-6. Predict the final factor, with an optional auxiliary head for descent type.
+5. Apply residual feedforward blocks.
+6. Predict the final factor, optionally with an auxiliary descent head.
 
-This baseline already works surprisingly well. It shows that the Burau matrix
-really does carry usable information about the final Garside factor, and it was
-enough to produce the first useful model-confusion plots. But it has a real
-limitation: once the tensor is flattened, the network has to rediscover both
-matrix-local and degree-local structure from absolute positions alone.
+This baseline matters because it proves the task is real. The Burau matrix is
+already informative enough that a straightforward network can recover a large
+amount of final-factor structure.
 
-## Hierarchical transformer
+### Hierarchical transformer
 
-The public transformer keeps the architecture close to the algebraic object.
+The transformer keeps the architecture aligned with the object being modeled.
 
-### Stage 1: tokenization inside each degree
+#### Local stage
 
-For each occupied degree slice, the model creates `9` tokens, one for each
-entry of the `3 x 3` matrix. Every token is the sum of:
+For each occupied degree, the model builds `9` tokens, one for each entry of
+the `3 x 3` matrix. Each token is the sum of:
 
-- a value embedding for the mod-`p` coefficient
+- a mod-`p` value embedding
 - a row embedding
 - a column embedding
 - a local degree embedding
 
-So the model never sees a coefficient in isolation; each token already knows
-which matrix entry and which polynomial degree it came from.
-
-### Stage 2: local encoder over one `3 x 3` slice
-
-Each degree slice receives a learned local CLS token and then passes through:
+A learned local CLS token is prepended to that slice, and the slice is processed
+by:
 
 - `2` local transformer blocks
 - `4` attention heads per block
 - feedforward width multiplier `4`
 
-The local CLS output is the summary vector for that degree. This is the key
-compression step: instead of flattening all `9D` entries directly into one huge
-vector, the model first converts each degree into one structured summary.
+The local CLS output becomes the summary for that degree.
 
-### Stage 3: global encoder across degrees
+#### Global stage
 
-The degree summaries are then fed to a second transformer with:
+Those degree summaries form a second sequence. The global encoder adds:
 
 - a learned global CLS token
 - a separate global degree embedding
@@ -132,52 +137,34 @@ The degree summaries are then fed to a second transformer with:
 - `8` attention heads per block
 
 The projected `burau_min_degree` scalar is added as a bias to the global CLS
-token. That lets the model compare the coarse location of the polynomial support
-with the content of the degree summaries.
+token. The final public model is factor-only: no Garside-length conditioning and
+no auxiliary descent loss.
 
-### Stage 4: final prediction head
+#### Final head
 
 The global CLS representation is layer-normalized and sent to a `24`-way linear
-classifier for the final Garside factor. The code still supports the older
-auxiliary descent head, but the best public model does **not** use it; the best
-run is factor-only.
+classifier for the final Garside factor.
 
-### Why this architecture
+### Why this transformer is better than the MLP
 
-This design is deliberately modest:
+The important difference is not that the transformer is "more modern." It is
+that it respects the tensor's hierarchy.
 
-- no giant token sequence over all coefficients
-- no decoder
-- no positional gimmicks beyond row, column, and degree embeddings
-- no task-specific hand engineering beyond the hierarchy already present in the
-  Burau tensor
+- The MLP only sees structure after flattening.
+- The transformer first learns interactions within one degree slice.
+- Then it learns interactions across degrees.
+- It can ignore padded tail degrees through the inferred mask.
 
-What it does add is the right inductive bias. The model can learn relations
-within a single polynomial degree before it reasons across degrees, which is
-much closer to how the data is actually organized than the flat MLP.
-
-## Why the transformer outperforms the MLP
-
-- The MLP must memorize interactions after flattening; the transformer models
-  them directly with attention.
-- The local encoder shares one computation pattern across every degree slice,
-  which is a much stronger bias than treating every flattened coordinate as
-  unrelated.
-- The global encoder can attend across occupied degrees while ignoring padded
-  tail degrees through the inferred mask.
-- The best transformer trains on the exact target we care about, without the
-  auxiliary descent head that made the older setup more diffuse.
-
-The result is not just prettier training curves. The better factor predictor
-still leaves a useful confusion signal on kernel examples, especially in the
-smoothed target cross-entropy plots.
+So the inductive bias matches the data much better. That is why the validation
+gap is so large, and it is also why the confusion curves remain clean rather
+than collapsing into noise.
 
 ## Figure gallery
 
 The full figure inventory is documented in [figures/README.md](figures/README.md).
-The core public story uses four groups of plots.
+The main public story uses four groups of plots.
 
-### 1. Training curves
+### 1. Training behavior
 
 ![Transformer training curves](figures/transformer_training_curves.png)
 ![MLP vs transformer validation comparison](figures/mlp_vs_transformer_validation.png)
@@ -191,17 +178,17 @@ prediction task much more cleanly than the original MLP.
 ![Average kernel-vs-random overlay, avg15](figures/kernel_avg_first5_vs_random_avg15.png)
 ![Average kernel-vs-random overlay, avg20](figures/kernel_avg_first5_vs_random_avg20.png)
 
-These average the first five saved kernel-hit trajectories and compare them to
-five random braids. `avg7` keeps more local wiggle, `avg15` is the cleanest
-presentation figure, and `avg20` shows that the separation survives even under
-heavy smoothing.
+These average the first five saved kernel-hit trajectories against five random
+braids. `avg7` keeps more local movement, `avg15` is the best presentation
+figure, and `avg20` shows that the separation survives even under aggressive
+smoothing.
 
 ### 3. Individual kernel-hit trajectories
 
 ![Kernel-hit vs random overlay, avg15](figures/kernel_hits_vs_random_avg15.png)
 
-The averaged view is not hiding one anomalous example. The individual
-kernel-hit curves also sit above the random controls for long prefix intervals.
+The average picture is not a statistical accident. The individual kernel-hit
+curves also stay elevated over long prefix intervals.
 
 ### 4. Geordie case study
 
@@ -209,9 +196,8 @@ kernel-hit curves also sit above the random controls for long prefix intervals.
 ![Geordie smoothed target cross-entropy](figures/geordie_target_cross_entropy_avg5.png)
 ![Geordie entropy confusion](figures/geordie_entropy_confusion.png)
 
-These plots focus on the saved Geordie kernel word. The target cross-entropy
-signal is the clearest separation, while entropy is a weaker but still visible
-secondary view.
+These plots focus on the saved Geordie kernel word. Target cross-entropy is the
+cleanest signal; entropy is a weaker but still informative secondary view.
 
 ## Start here
 
