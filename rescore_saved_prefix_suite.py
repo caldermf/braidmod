@@ -84,7 +84,7 @@ def emit_case(
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Rescore a saved Geordie/random GNF suite with a new checkpoint."
+        description="Rescore a saved GWY-kernel/random GNF suite with a new checkpoint."
     )
     parser.add_argument("--checkpoint", required=True, help="Path to best_model.pt or snapshot")
     parser.add_argument("--device", default="cuda", help="cuda, cpu, cuda:0, ...")

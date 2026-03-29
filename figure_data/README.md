@@ -4,7 +4,7 @@ This directory contains the small tracked JSON inputs used to reproduce the
 public confusion figures.
 
 - `confusion_suite_tuned/`
-  Saved Geordie-plus-random prefix trajectories for the tuned transformer.
+  Saved GWY-kernel-plus-random prefix trajectories for the tuned transformer.
 - `search/kernel_hits_len60.json`
   Saved kernel-hit search output used for the kernel-vs-random overlays.
 

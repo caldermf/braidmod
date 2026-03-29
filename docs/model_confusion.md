@@ -69,22 +69,21 @@ The best public model is a hierarchical transformer:
 The clearest public figures are the kernel-vs-random overlays based on target
 cross-entropy.
 
-- `figures/kernel_avg_first5_vs_random_avg10.png`
-- `figures/kernel_avg_first5_vs_random_avg15.png`
+- `figures/known_kernel_elements_vs_random_target_cross_entropy_running_average_15_steps.png`
+- `figures/individual_known_kernel_elements_vs_random_target_cross_entropy_running_average_15_steps.png`
 
-These plots average five saved kernel-hit trajectories and compare them to the
-average of five saved random braids. The transformer's smoothed target
-cross-entropy stays substantially higher on the kernel side over long prefix
-intervals.
+The first averages five saved kernel-hit trajectories and compares them to the
+mean of five random braids under a 15-step running average. The second shows
+the individual known-kernel trajectories against the same random controls.
 
-We also keep:
+For the single-element case study we keep:
 
-- `figures/kernel_hits_vs_random_avg10.png`
-- `figures/geordie_vs_random_cumulative_xent.png`
-- `figures/geordie_entropy_confusion.png`
+- `figures/gwy_kernel_element_vs_random_cumulative_target_cross_entropy.png`
+- `figures/gwy_kernel_element_vs_random_target_cross_entropy_running_average_5_steps.png`
+- `figures/gwy_kernel_element_vs_random_entropy_confusion.png`
 
-The first shows the individual saved trajectories. The latter two summarize the
-Geordie kernel word against random controls.
+These summarize the GWY kernel element against random controls and show that
+the target-cross-entropy signal remains the clearest public proxy.
 
 ## Search
 

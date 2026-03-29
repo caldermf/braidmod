@@ -4,6 +4,8 @@ This directory contains the curated public plots for `braidmod`.
 
 ## Training figures
 
+- [mlp_and_transformer_training_curves.png](mlp_and_transformer_training_curves.png)
+  The main front-page figure: MLP and transformer training/validation curves side by side.
 - [mlp_training_curves.png](mlp_training_curves.png)
   Baseline MLP training and validation curves.
 - [transformer_training_curves.png](transformer_training_curves.png)
@@ -11,39 +13,23 @@ This directory contains the curated public plots for `braidmod`.
 - [mlp_vs_transformer_validation.png](mlp_vs_transformer_validation.png)
   Direct validation comparison between the original MLP and the best transformer.
 
-## Averaged kernel-vs-random overlays
+## Known-kernel overlays
 
-- [kernel_avg_first5_vs_random_avg7.png](kernel_avg_first5_vs_random_avg7.png)
-  Light smoothing. Preserves more local movement in the kernel trajectories.
-- [kernel_avg_first5_vs_random_avg10.png](kernel_avg_first5_vs_random_avg10.png)
-  Balanced summary figure with moderate smoothing.
-- [kernel_avg_first5_vs_random_avg15.png](kernel_avg_first5_vs_random_avg15.png)
-  Best single presentation figure for the public story.
-- [kernel_avg_first5_vs_random_avg20.png](kernel_avg_first5_vs_random_avg20.png)
-  Heavy smoothing. Shows that the separation survives substantial averaging.
+- [known_kernel_elements_vs_random_target_cross_entropy_running_average_15_steps.png](known_kernel_elements_vs_random_target_cross_entropy_running_average_15_steps.png)
+  Mean target cross-entropy for the first five known kernel elements against the mean of five random braids, using a 15-step running average.
+- [individual_known_kernel_elements_vs_random_target_cross_entropy_running_average_15_steps.png](individual_known_kernel_elements_vs_random_target_cross_entropy_running_average_15_steps.png)
+  Individual known-kernel trajectories against five random controls, again using a 15-step running average.
 
-Each of these averages the first five saved kernel-hit trajectories from the
-tracked search output against the average of five saved random braids.
+These are the clearest public plots showing that the confusion signal is not an artifact of one example.
 
-## Individual kernel-hit overlays
+## GWY kernel element plots
 
-- [kernel_hits_vs_random_avg10.png](kernel_hits_vs_random_avg10.png)
-  Individual kernel-hit trajectories against random controls with moderate smoothing.
-- [kernel_hits_vs_random_avg15.png](kernel_hits_vs_random_avg15.png)
-  Cleaner individual overlay for public presentation.
-- [kernel_hits_vs_random_avg20.png](kernel_hits_vs_random_avg20.png)
-  Strongest smoothing for the individual-trajectory view.
-
-These plots show that the separation is not created by averaging alone.
-
-## Geordie plots
-
-- [geordie_vs_random_cumulative_xent.png](geordie_vs_random_cumulative_xent.png)
-  Cumulative target cross-entropy comparison for the saved Geordie kernel word.
-- [geordie_target_cross_entropy_avg5.png](geordie_target_cross_entropy_avg5.png)
-  Smoothed target cross-entropy along Geordie prefixes.
-- [geordie_entropy_confusion.png](geordie_entropy_confusion.png)
-  Entropy-based confusion view for the same example.
+- [gwy_kernel_element_vs_random_cumulative_target_cross_entropy.png](gwy_kernel_element_vs_random_cumulative_target_cross_entropy.png)
+  Cumulative target cross-entropy for the GWY kernel element against the mean of five random braids.
+- [gwy_kernel_element_vs_random_target_cross_entropy_running_average_5_steps.png](gwy_kernel_element_vs_random_target_cross_entropy_running_average_5_steps.png)
+  Target cross-entropy for the GWY kernel element with a 5-step running average.
+- [gwy_kernel_element_vs_random_entropy_confusion.png](gwy_kernel_element_vs_random_entropy_confusion.png)
+  Entropy-based confusion for the GWY kernel element against the random mean.
 
 ## Provenance
 

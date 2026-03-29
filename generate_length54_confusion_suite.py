@@ -87,10 +87,10 @@ def emit_case(checkpoint: str, device: str, out_dir: Path, name: str, gnf_payloa
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Generate Geordie plus five random length-54 confusion plots.")
+    parser = argparse.ArgumentParser(description="Generate the GWY kernel element plus five random length-54 confusion plots.")
     parser.add_argument("--checkpoint", required=True, help="Path to best_model.pt")
     parser.add_argument("--device", default="cpu", help="cpu, cuda, cuda:0, ...")
-    parser.add_argument("--geordie-gnf-path", required=True, help="Path to saved Geordie GNF JSON")
+    parser.add_argument("--geordie-gnf-path", required=True, help="Path to the saved GWY kernel-element GNF JSON")
     parser.add_argument("--out-dir", required=True, help="Directory for the six charts and JSON outputs")
     parser.add_argument("--seed", type=int, default=42, help="Seed for random GNF generation")
     parser.add_argument("--topk", type=int, default=3, help="Top-k predictions to store in JSON outputs")

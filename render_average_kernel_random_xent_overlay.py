@@ -9,6 +9,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 from render_kernel_random_xent_overlay import build_kernel_series, load_random_series
+from render_kernel_random_xent_overlay import smoothing_phrase
 
 
 Series = Tuple[str, List[int], List[float]]
@@ -37,6 +38,10 @@ def plot_average_overlay(
     window: int,
     num_kernels: int,
     num_randoms: int,
+    title: str | None = None,
+    ylabel: str | None = None,
+    kernel_label: str | None = None,
+    random_label: str | None = None,
 ) -> None:
     kernel_prefix_lens, kernel_values = kernel_avg
     random_prefix_lens, random_values = random_avg
@@ -53,26 +58,27 @@ def plot_average_overlay(
         kernel_values,
         color="#b23a48",
         linewidth=3.0,
-        label=f"kernel avg (first {num_kernels})",
+        label=kernel_label or f"mean of first {num_kernels} known kernel elements",
     )
     ax.plot(
         random_prefix_lens,
         random_values,
         color="#3a86a8",
         linewidth=3.0,
-        label=f"random avg ({num_randoms})",
+        label=random_label or f"mean of {num_randoms} random braids",
     )
 
-    ax.set_xlabel("Garside Prefix Length")
-    if mode == "avg5":
-        ylabel = f"Target Cross-Entropy Avg{window}"
-        title = (
-            f"Average Kernel vs Random Length-54 Elements: "
-            f"Target Cross-Entropy Avg{window}"
-        )
-    else:
-        ylabel = "Target Cross-Entropy"
-        title = "Average Kernel vs Random Length-54 Elements: Target Cross-Entropy"
+    ax.set_xlabel("Prefix length in Garside factors")
+    if ylabel is None:
+        if mode == "avg5":
+            ylabel = f"Target cross-entropy ({smoothing_phrase(mode, window)})"
+        else:
+            ylabel = "Target cross-entropy"
+    if title is None:
+        if mode == "avg5":
+            title = f"Known kernel elements vs random braids: mean target cross-entropy ({smoothing_phrase(mode, window)})"
+        else:
+            title = "Known kernel elements vs random braids: mean target cross-entropy"
     ax.set_ylabel(ylabel)
     ax.set_title(title)
     ax.set_xlim(1, max_length)
@@ -87,14 +93,14 @@ def plot_average_overlay(
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Render a two-line average overlay: mean kernel-hit curve vs mean random curve."
+        description="Render a two-line public overlay: mean known-kernel curve vs mean random-control curve."
     )
     parser.add_argument("--search-json", required=True, help="Reservoir search JSON containing kernel_hits")
     parser.add_argument("--checkpoint", required=True, help="Model checkpoint used to score kernel hits")
     parser.add_argument("--suite-dir", required=True, help="Directory containing random_*_confusion.json files")
     parser.add_argument("--out-png", required=True, help="Output PNG path")
     parser.add_argument("--device", default="auto", help="Device for scoring kernel hits")
-    parser.add_argument("--mode", choices=("avg5", "raw"), default="avg5", help="Plot raw xent or running-average xent")
+    parser.add_argument("--mode", choices=("avg5", "raw"), default="avg5", help="Plot raw target cross-entropy or a running average")
     parser.add_argument("--window", type=int, default=5, help="Running-average window")
     parser.add_argument("--max-length", type=int, default=60, help="X-axis upper bound")
     parser.add_argument(
@@ -103,6 +109,10 @@ def main() -> None:
         default=5,
         help="Number of kernel-hit series to average from the front of the saved kernel-hit list",
     )
+    parser.add_argument("--title", help="Optional plot title override")
+    parser.add_argument("--ylabel", help="Optional y-axis label override")
+    parser.add_argument("--kernel-label", help="Optional legend label for the kernel mean curve")
+    parser.add_argument("--random-label", help="Optional legend label for the random mean curve")
     args = parser.parse_args()
 
     kernel_series = build_kernel_series(
@@ -130,6 +140,10 @@ def main() -> None:
         window=args.window,
         num_kernels=len(kernel_series),
         num_randoms=len(random_series),
+        title=args.title,
+        ylabel=args.ylabel,
+        kernel_label=args.kernel_label,
+        random_label=args.random_label,
     )
 
     print(

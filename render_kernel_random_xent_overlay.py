@@ -2,7 +2,7 @@
 import argparse
 import json
 from pathlib import Path
-from typing import List, Sequence, Tuple
+from typing import List, Optional, Sequence, Tuple
 
 import matplotlib
 matplotlib.use("Agg")
@@ -24,14 +24,27 @@ def maybe_smooth(values: List[float], mode: str, window: int) -> List[float]:
     raise ValueError(f"Unsupported mode: {mode}")
 
 
-def load_random_series(suite_dir: Path, mode: str, window: int) -> List[Tuple[str, List[int], List[float]]]:
+def smoothing_phrase(mode: str, window: int) -> str:
+    if mode == "avg5":
+        return f"{window}-step running average"
+    if mode == "raw":
+        return "raw values"
+    raise ValueError(f"Unsupported mode: {mode}")
+
+
+def load_random_series(
+    suite_dir: Path,
+    mode: str,
+    window: int,
+    label_prefix: str = "random braid",
+) -> List[Tuple[str, List[int], List[float]]]:
     series = []
-    for json_path in sorted(suite_dir.glob("random_*_confusion.json")):
+    for idx, json_path in enumerate(sorted(suite_dir.glob("random_*_confusion.json")), start=1):
         payload = json.loads(json_path.read_text(encoding="utf-8"))
         progression = payload["progression"]
         prefix_lens = [int(item["prefix_len"]) for item in progression]
         xent = [float(item["target_cross_entropy"]) for item in progression]
-        label = json_path.stem.replace("_confusion", "").replace("_", " ")
+        label = f"{label_prefix} {idx}"
         series.append((label, prefix_lens, maybe_smooth(xent, mode=mode, window=window)))
     if not series:
         raise ValueError(f"No random_*_confusion.json files found in {suite_dir}")
@@ -44,6 +57,7 @@ def build_kernel_series(
     device: str,
     mode: str,
     window: int,
+    label_prefix: str = "known kernel element",
 ) -> List[Tuple[str, List[int], List[float]]]:
     resolved_device = resolve_device(device)
     checkpoint = torch.load(checkpoint_path, map_location=resolved_device)
@@ -96,8 +110,7 @@ def build_kernel_series(
             xent = F.cross_entropy(factor_logits, targets, reduction="none").tolist()
             prefix_lens = list(range(1, len(factor_ids) + 1))
 
-            kernel_type = hit.get("kernel_type", "kernel")
-            label = f"kernel {idx} {kernel_type}"
+            label = f"{label_prefix} {idx}"
             series.append((label, prefix_lens, maybe_smooth(xent, mode=mode, window=window)))
     return series
 
@@ -109,6 +122,8 @@ def plot_overlay(
     max_length: int,
     mode: str,
     window: int,
+    title: Optional[str] = None,
+    ylabel: Optional[str] = None,
 ) -> None:
     fig, ax = plt.subplots(figsize=(12, 6.5))
     ymax = 1.0
@@ -139,13 +154,17 @@ def plot_overlay(
             color=random_colors[idx % len(random_colors)],
         )
 
-    ax.set_xlabel("Garside Prefix Length")
-    if mode == "avg5":
-        ylabel = f"Target Cross-Entropy Avg{window}"
-        title = f"Kernel Hits vs Random Length-54 Elements: Target Cross-Entropy Avg{window}"
-    else:
-        ylabel = "Target Cross-Entropy"
-        title = "Kernel Hits vs Random Length-54 Elements: Target Cross-Entropy"
+    ax.set_xlabel("Prefix length in Garside factors")
+    if ylabel is None:
+        if mode == "avg5":
+            ylabel = f"Target cross-entropy ({smoothing_phrase(mode, window)})"
+        else:
+            ylabel = "Target cross-entropy"
+    if title is None:
+        if mode == "avg5":
+            title = f"Known kernel elements vs random braids: target cross-entropy ({smoothing_phrase(mode, window)})"
+        else:
+            title = "Known kernel elements vs random braids: target cross-entropy"
     ax.set_ylabel(ylabel)
     ax.set_title(title)
     ax.set_xlim(1, max_length)
@@ -160,16 +179,28 @@ def plot_overlay(
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Overlay kernel-hit avg5 target-cross-entropy curves with random confusion-suite curves."
+        description="Overlay known-kernel target-cross-entropy curves with random-control curves."
     )
     parser.add_argument("--search-json", required=True, help="Reservoir search JSON containing kernel_hits")
     parser.add_argument("--checkpoint", required=True, help="Model checkpoint used to score kernel hits")
     parser.add_argument("--suite-dir", required=True, help="Directory containing random_*_confusion.json files")
     parser.add_argument("--out-png", required=True, help="Output PNG path")
     parser.add_argument("--device", default="auto", help="Device for scoring kernel hits")
-    parser.add_argument("--mode", choices=("avg5", "raw"), default="avg5", help="Plot raw xent or running-average xent")
+    parser.add_argument("--mode", choices=("avg5", "raw"), default="avg5", help="Plot raw target cross-entropy or a running average")
     parser.add_argument("--window", type=int, default=5, help="Running-average window")
     parser.add_argument("--max-length", type=int, default=60, help="X-axis upper bound")
+    parser.add_argument("--title", help="Optional plot title override")
+    parser.add_argument("--ylabel", help="Optional y-axis label override")
+    parser.add_argument(
+        "--kernel-label-prefix",
+        default="known kernel element",
+        help="Legend label prefix for the scored kernel-element trajectories",
+    )
+    parser.add_argument(
+        "--random-label-prefix",
+        default="random braid",
+        help="Legend label prefix for the random-control trajectories",
+    )
     args = parser.parse_args()
 
     kernel_series = build_kernel_series(
@@ -178,8 +209,14 @@ def main() -> None:
         device=args.device,
         mode=args.mode,
         window=args.window,
+        label_prefix=args.kernel_label_prefix,
     )
-    random_series = load_random_series(Path(args.suite_dir), mode=args.mode, window=args.window)
+    random_series = load_random_series(
+        Path(args.suite_dir),
+        mode=args.mode,
+        window=args.window,
+        label_prefix=args.random_label_prefix,
+    )
     plot_overlay(
         kernel_series=kernel_series,
         random_series=random_series,
@@ -187,6 +224,8 @@ def main() -> None:
         max_length=args.max_length,
         mode=args.mode,
         window=args.window,
+        title=args.title,
+        ylabel=args.ylabel,
     )
     print(
         json.dumps(

@@ -15,8 +15,7 @@ left normal form. The input is the full projectively normalized Burau tensor,
 kept as a polynomial object modulo `p` rather than specialized to isolated
 numerical values of the indeterminate.
 
-![MLP vs transformer validation curves](figures/mlp_vs_transformer_validation.png)
-![Average kernel-vs-random confusion overlay](figures/kernel_avg_first5_vs_random_avg15.png)
+![MLP baseline and transformer training curves](figures/mlp_and_transformer_training_curves.png)
 
 ## Mathematical background
 
@@ -135,14 +134,14 @@ kernel examples:
   windows `7`, `10`, `15`, and `20`
 - the individual kernel-hit trajectories remain visibly elevated, so the effect is
   not created by averaging alone
-- the saved Geordie kernel word shows the same pattern most clearly in target
+- the saved GWY kernel element shows the same pattern most clearly in target
   cross-entropy
 
 The three figures that summarize the repo best are:
 
-- [figures/mlp_vs_transformer_validation.png](figures/mlp_vs_transformer_validation.png)
-- [figures/kernel_avg_first5_vs_random_avg15.png](figures/kernel_avg_first5_vs_random_avg15.png)
-- [figures/geordie_vs_random_cumulative_xent.png](figures/geordie_vs_random_cumulative_xent.png)
+- [figures/mlp_and_transformer_training_curves.png](figures/mlp_and_transformer_training_curves.png)
+- [figures/known_kernel_elements_vs_random_target_cross_entropy_running_average_15_steps.png](figures/known_kernel_elements_vs_random_target_cross_entropy_running_average_15_steps.png)
+- [figures/gwy_kernel_element_vs_random_cumulative_target_cross_entropy.png](figures/gwy_kernel_element_vs_random_cumulative_target_cross_entropy.png)
 
 ## Why this matters for higher primes
 
@@ -264,38 +263,33 @@ The main public story uses four groups of plots.
 
 ### 1. Training behavior
 
-![Transformer training curves](figures/transformer_training_curves.png)
-![MLP vs transformer validation comparison](figures/mlp_vs_transformer_validation.png)
+![MLP baseline and transformer training curves](figures/mlp_and_transformer_training_curves.png)
 
-These show the basic modeling result: the transformer learns the last-factor
-prediction task much more cleanly than the original MLP.
+This is the cleanest first figure for the repo. It shows the original MLP and
+the final transformer side by side, with both training and validation behavior
+visible in one place.
 
-### 2. Averaged kernel-vs-random overlays
+### 2. Known-kernel vs random controls
 
-![Average kernel-vs-random overlay, avg7](figures/kernel_avg_first5_vs_random_avg7.png)
-![Average kernel-vs-random overlay, avg15](figures/kernel_avg_first5_vs_random_avg15.png)
-![Average kernel-vs-random overlay, avg20](figures/kernel_avg_first5_vs_random_avg20.png)
+![Mean known-kernel vs random target cross-entropy](figures/known_kernel_elements_vs_random_target_cross_entropy_running_average_15_steps.png)
+![Individual known-kernel vs random target cross-entropy](figures/individual_known_kernel_elements_vs_random_target_cross_entropy_running_average_15_steps.png)
 
-These average the first five saved kernel-hit trajectories against five random
-braids. `avg7` keeps more local movement, `avg15` is the best presentation
-figure, and `avg20` shows that the separation survives even under aggressive
-smoothing.
+These are the main confusion-score figures for the public story. The first plot
+compares the mean of the first five known kernel elements to the mean of five
+random braids under a 15-step running average of target cross-entropy. The
+second shows the individual known-kernel trajectories against the same random
+controls, making clear that the effect is not created by averaging alone.
 
-### 3. Individual kernel-hit trajectories
+### 3. GWY kernel element case study
 
-![Kernel-hit vs random overlay, avg15](figures/kernel_hits_vs_random_avg15.png)
+![GWY kernel element cumulative target cross-entropy](figures/gwy_kernel_element_vs_random_cumulative_target_cross_entropy.png)
+![GWY kernel element target cross-entropy](figures/gwy_kernel_element_vs_random_target_cross_entropy_running_average_5_steps.png)
+![GWY kernel element entropy confusion](figures/gwy_kernel_element_vs_random_entropy_confusion.png)
 
-The average picture is not a statistical accident. The individual kernel-hit
-curves also stay elevated over long prefix intervals.
-
-### 4. Geordie case study
-
-![Geordie cumulative target cross-entropy](figures/geordie_vs_random_cumulative_xent.png)
-![Geordie smoothed target cross-entropy](figures/geordie_target_cross_entropy_avg5.png)
-![Geordie entropy confusion](figures/geordie_entropy_confusion.png)
-
-These plots focus on the saved Geordie kernel word. Target cross-entropy is the
-cleanest signal; entropy is a weaker but still informative secondary view.
+These plots focus on the GWY kernel element found by Gibson, Williamson, and
+Yacobi. The target cross-entropy curves are the clearest evidence that model
+confusion is predictive in characteristic `p`; entropy is a weaker but still
+visible secondary signal.
 
 ## Background references
 
@@ -426,12 +420,18 @@ Render the public averaged kernel-vs-random confusion curves:
   --search-json figure_data/search/kernel_hits_len60.json \
   --checkpoint checkpoints/best_transformer/best_model.pt \
   --suite-dir figure_data/confusion_suite_tuned \
-  --out-png figures/generated/kernel_avg_first5_vs_random_avg_target_xent_avg15.png \
+  --out-png figures/generated/known_kernel_elements_vs_random_target_cross_entropy_running_average_15_steps.png \
   --device cuda \
   --mode avg5 \
   --window 15 \
   --max-length 60 \
   --num-kernels 5
+```
+
+Or render the full public figure story in one Slurm job:
+
+```bash
+sbatch jobs/render_public_story_figures.sh
 ```
 
 ## Public artifacts
@@ -456,19 +456,15 @@ it.
 
 ### Public figure set
 
+- `figures/mlp_and_transformer_training_curves.png`
 - `figures/mlp_training_curves.png`
 - `figures/transformer_training_curves.png`
 - `figures/mlp_vs_transformer_validation.png`
-- `figures/kernel_avg_first5_vs_random_avg7.png`
-- `figures/kernel_avg_first5_vs_random_avg10.png`
-- `figures/kernel_avg_first5_vs_random_avg15.png`
-- `figures/kernel_avg_first5_vs_random_avg20.png`
-- `figures/kernel_hits_vs_random_avg10.png`
-- `figures/kernel_hits_vs_random_avg15.png`
-- `figures/kernel_hits_vs_random_avg20.png`
-- `figures/geordie_vs_random_cumulative_xent.png`
-- `figures/geordie_target_cross_entropy_avg5.png`
-- `figures/geordie_entropy_confusion.png`
+- `figures/known_kernel_elements_vs_random_target_cross_entropy_running_average_15_steps.png`
+- `figures/individual_known_kernel_elements_vs_random_target_cross_entropy_running_average_15_steps.png`
+- `figures/gwy_kernel_element_vs_random_cumulative_target_cross_entropy.png`
+- `figures/gwy_kernel_element_vs_random_target_cross_entropy_running_average_5_steps.png`
+- `figures/gwy_kernel_element_vs_random_entropy_confusion.png`
 
 ## Data policy
 
