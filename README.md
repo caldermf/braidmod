@@ -40,10 +40,178 @@ This turns model failure into a mathematical tool.
 - saved kernel prefixes remain statistically separated from random braids by
   smoothed target cross-entropy
 
-The two most presentation-ready figures are:
+The most presentation-ready figures are:
 
 - [figures/kernel_avg_first5_vs_random_avg15.png](figures/kernel_avg_first5_vs_random_avg15.png)
 - [figures/geordie_vs_random_cumulative_xent.png](figures/geordie_vs_random_cumulative_xent.png)
+- [figures/mlp_vs_transformer_validation.png](figures/mlp_vs_transformer_validation.png)
+
+## Model comparison
+
+| Model | Input handling | Core trunk | Training target | Public metric |
+| --- | --- | --- | --- | --- |
+| MLP baseline | Embed each mod-`p` coefficient, then flatten the full `D x 3 x 3` tensor | Residual feedforward blocks | final factor + auxiliary descent class | `0.7266` val factor accuracy |
+| Best transformer | Embed coefficients as tokens, summarize each degree slice, then attend across degrees | hierarchical local/global self-attention | final factor only | `0.2178` val loss, `0.9388` val factor accuracy |
+
+The transformer wins for a structural reason, not just a scaling reason. The
+Burau tensor already has a natural hierarchy:
+
+- inside one degree there is a small `3 x 3` matrix with local row/column structure
+- across degrees there is a polynomial support pattern with variable occupied width
+
+The MLP sees that tensor only after flattening. The transformer keeps both
+levels of structure explicit.
+
+## Shared input representation
+
+Both public models consume the same projectively normalized Burau tensor:
+
+- shape: `D x 3 x 3`
+- entries: integers mod `p`
+- extra scalar feature: `burau_min_degree`
+- target class: one of the `24` permutations in `S_4`, representing the final
+  Garside factor
+
+The dataset zero-pads the tensor out to the fixed training depth `D`. For the
+transformer, the code infers a valid-degree mask from the last occupied degree
+so that internal zero slices remain legal while trailing padding is ignored.
+
+## MLP baseline
+
+The original MLP is intentionally simple.
+
+1. Embed each coefficient by value, degree, row, and column.
+2. Flatten the full tensor into one long vector.
+3. Project once into a hidden state.
+4. Add a projected `burau_min_degree` feature.
+5. Pass the result through residual MLP blocks.
+6. Predict the final factor, with an optional auxiliary head for descent type.
+
+This baseline already works surprisingly well. It shows that the Burau matrix
+really does carry usable information about the final Garside factor, and it was
+enough to produce the first useful model-confusion plots. But it has a real
+limitation: once the tensor is flattened, the network has to rediscover both
+matrix-local and degree-local structure from absolute positions alone.
+
+## Hierarchical transformer
+
+The public transformer keeps the architecture close to the algebraic object.
+
+### Stage 1: tokenization inside each degree
+
+For each occupied degree slice, the model creates `9` tokens, one for each
+entry of the `3 x 3` matrix. Every token is the sum of:
+
+- a value embedding for the mod-`p` coefficient
+- a row embedding
+- a column embedding
+- a local degree embedding
+
+So the model never sees a coefficient in isolation; each token already knows
+which matrix entry and which polynomial degree it came from.
+
+### Stage 2: local encoder over one `3 x 3` slice
+
+Each degree slice receives a learned local CLS token and then passes through:
+
+- `2` local transformer blocks
+- `4` attention heads per block
+- feedforward width multiplier `4`
+
+The local CLS output is the summary vector for that degree. This is the key
+compression step: instead of flattening all `9D` entries directly into one huge
+vector, the model first converts each degree into one structured summary.
+
+### Stage 3: global encoder across degrees
+
+The degree summaries are then fed to a second transformer with:
+
+- a learned global CLS token
+- a separate global degree embedding
+- `6` global transformer blocks
+- `8` attention heads per block
+
+The projected `burau_min_degree` scalar is added as a bias to the global CLS
+token. That lets the model compare the coarse location of the polynomial support
+with the content of the degree summaries.
+
+### Stage 4: final prediction head
+
+The global CLS representation is layer-normalized and sent to a `24`-way linear
+classifier for the final Garside factor. The code still supports the older
+auxiliary descent head, but the best public model does **not** use it; the best
+run is factor-only.
+
+### Why this architecture
+
+This design is deliberately modest:
+
+- no giant token sequence over all coefficients
+- no decoder
+- no positional gimmicks beyond row, column, and degree embeddings
+- no task-specific hand engineering beyond the hierarchy already present in the
+  Burau tensor
+
+What it does add is the right inductive bias. The model can learn relations
+within a single polynomial degree before it reasons across degrees, which is
+much closer to how the data is actually organized than the flat MLP.
+
+## Why the transformer outperforms the MLP
+
+- The MLP must memorize interactions after flattening; the transformer models
+  them directly with attention.
+- The local encoder shares one computation pattern across every degree slice,
+  which is a much stronger bias than treating every flattened coordinate as
+  unrelated.
+- The global encoder can attend across occupied degrees while ignoring padded
+  tail degrees through the inferred mask.
+- The best transformer trains on the exact target we care about, without the
+  auxiliary descent head that made the older setup more diffuse.
+
+The result is not just prettier training curves. The better factor predictor
+still leaves a useful confusion signal on kernel examples, especially in the
+smoothed target cross-entropy plots.
+
+## Figure gallery
+
+The full figure inventory is documented in [figures/README.md](figures/README.md).
+The core public story uses four groups of plots.
+
+### 1. Training curves
+
+![Transformer training curves](figures/transformer_training_curves.png)
+![MLP vs transformer validation comparison](figures/mlp_vs_transformer_validation.png)
+
+These show the basic modeling result: the transformer learns the factor
+prediction task much more cleanly than the original MLP.
+
+### 2. Averaged kernel-vs-random overlays
+
+![Average kernel-vs-random overlay, avg7](figures/kernel_avg_first5_vs_random_avg7.png)
+![Average kernel-vs-random overlay, avg15](figures/kernel_avg_first5_vs_random_avg15.png)
+![Average kernel-vs-random overlay, avg20](figures/kernel_avg_first5_vs_random_avg20.png)
+
+These average the first five saved kernel-hit trajectories and compare them to
+five random braids. `avg7` keeps more local wiggle, `avg15` is the cleanest
+presentation figure, and `avg20` shows that the separation survives even under
+heavy smoothing.
+
+### 3. Individual kernel-hit trajectories
+
+![Kernel-hit vs random overlay, avg15](figures/kernel_hits_vs_random_avg15.png)
+
+The averaged view is not hiding one anomalous example. The individual
+kernel-hit curves also sit above the random controls for long prefix intervals.
+
+### 4. Geordie case study
+
+![Geordie cumulative target cross-entropy](figures/geordie_vs_random_cumulative_xent.png)
+![Geordie smoothed target cross-entropy](figures/geordie_target_cross_entropy_avg5.png)
+![Geordie entropy confusion](figures/geordie_entropy_confusion.png)
+
+These plots focus on the saved Geordie kernel word. The target cross-entropy
+signal is the clearest separation, while entropy is a weaker but still visible
+secondary view.
 
 ## Start here
 
@@ -53,6 +221,8 @@ The two most presentation-ready figures are:
   Public model artifacts, logs, and training curves.
 - `figures/`
   Curated plots for the public story.
+- `figures/README.md`
+  Short guide to what each public figure is showing.
 - `jobs/`
   Clean cluster entrypoints for dataset generation, training, figure rendering,
   and search.
@@ -193,10 +363,18 @@ it.
 
 ### Public figure set
 
+- `figures/mlp_training_curves.png`
+- `figures/transformer_training_curves.png`
+- `figures/mlp_vs_transformer_validation.png`
+- `figures/kernel_avg_first5_vs_random_avg7.png`
 - `figures/kernel_avg_first5_vs_random_avg10.png`
 - `figures/kernel_avg_first5_vs_random_avg15.png`
+- `figures/kernel_avg_first5_vs_random_avg20.png`
 - `figures/kernel_hits_vs_random_avg10.png`
+- `figures/kernel_hits_vs_random_avg15.png`
+- `figures/kernel_hits_vs_random_avg20.png`
 - `figures/geordie_vs_random_cumulative_xent.png`
+- `figures/geordie_target_cross_entropy_avg5.png`
 - `figures/geordie_entropy_confusion.png`
 
 ## Data policy
