@@ -409,7 +409,7 @@ Run model-confusion search:
   --out-json artifacts/public_frontier_search.json
 ```
 
-Render the public averaged kernel-vs-random confusion curves:
+Render the averaged kernel-vs-random confusion curves:
 
 ```bash
 .venv/bin/python render_average_kernel_random_xent_overlay.py \
@@ -424,56 +424,8 @@ Render the public averaged kernel-vs-random confusion curves:
   --num-kernels 5
 ```
 
-Or render the full public figure story in one Slurm job:
+Or render the full figure set in one Slurm job:
 
 ```bash
 sbatch jobs/render_public_story_figures.sh
 ```
-
-## Public artifacts
-
-### Baseline MLP
-
-- curves: `checkpoints/original_mlp/training_curves.png`
-- log: `checkpoints/original_mlp/train.log`
-- headline validation accuracy: `0.7266`
-
-The raw MLP checkpoint is intentionally omitted from GitHub. The public repo
-keeps the log, the curves, and the exact training recipe needed to regenerate
-it.
-
-### Best transformer
-
-- checkpoint: `checkpoints/best_transformer/best_model.pt`
-- curves: `checkpoints/best_transformer/training_curves.png`
-- comparison plot: `checkpoints/best_transformer/mlp_vs_transformer_validation.png`
-- headline validation loss: `0.2178`
-- headline validation factor accuracy: `0.9388`
-
-### Public figure set
-
-- `figures/mlp_and_transformer_training_curves.png`
-- `figures/mlp_training_curves.png`
-- `figures/transformer_training_curves.png`
-- `figures/mlp_vs_transformer_validation.png`
-- `figures/known_kernel_elements_vs_random_target_cross_entropy_running_average_15_steps.png`
-- `figures/individual_known_kernel_elements_vs_random_target_cross_entropy_running_average_15_steps.png`
-- `figures/gwy_kernel_element_vs_random_cumulative_target_cross_entropy.png`
-- `figures/gwy_kernel_element_vs_random_target_cross_entropy_running_average_5_steps.png`
-- `figures/gwy_kernel_element_vs_random_entropy_confusion.png`
-
-## Data policy
-
-The repository tracks small figure inputs and the public transformer checkpoint,
-but not the large generated training corpora. Put regenerated datasets under
-`data/generated/`. See `data/README.md` for the default paths and regeneration
-commands.
-
-## Cluster use
-
-If you are running on Yale Bouchet, use the curated scripts in `jobs/`. Older
-experiment-specific wrappers are archived under `prototypes/slurm/`.
-
-## License
-
-This repository is released under the MIT License. See `LICENSE`.
