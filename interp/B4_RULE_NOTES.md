@@ -101,3 +101,44 @@ The punchline so far is therefore not "we found the full B4 theorem over
 F2." The honest punchline is sharper: we found the exact final-simple-factor
 rule, showed why the full-product F2 problem is harder, and identified the
 frontier action that the transformer appears to be approximating.
+
+## Integer Boundary Audit
+
+We then repeated the boundary-rule audit over `Z[v]` instead of `(Z/2)[v]`,
+using the stored factor sequences to replay the braid through the integer
+Burau representation. The dense int64 implementation was checked against the
+Python arbitrary-precision exact implementation on 16 length-25 examples, with
+no mismatches. On the audited sample, coefficients remained small enough for
+int64: the maximum absolute coefficient observed was `900,788`.
+
+The result is much stronger than the mod-2 audit. Signs in the top boundary
+band carry a large amount of the information that mod 2 destroys.
+
+On `262,144` train examples and `65,536` held-out examples:
+
+| Feature | Exact accuracy | Bit accuracy | Coverage |
+|---|---:|---:|---:|
+| trailing top column support over `Z[v]` | `60.5%` | `86.3%` | `100.0%` |
+| best mod-2 mined feature: both boundary column masks, `r=2` | `63.6%` | `86.9%` | `99.9%` |
+| signed/integer: both negative-column masks, `r=3` | `84.8%` | `94.5%` | `99.0%` |
+| signed/integer: both positive-column masks, `r=3` | `84.2%` | `94.3%` | `98.9%` |
+| signed/integer: trailing sign tokens, `r=2` | `84.1%` | `94.1%` | `98.7%` |
+
+Increasing the radius beyond `3` or `4` did not produce a clean near-perfect
+lookup. It mostly made keys sparser, reducing coverage or majority
+generalization. Thus the best simple signed-boundary rule is not exact, but
+it is far stronger than the mod-2 rule and stronger than the current
+transformer trained only on mod-2 tokens.
+
+This gives a sharper mathematical picture:
+
+1. The final simple factor has an exact two-slice top-column signature.
+2. In the full product, the prefix action obscures that signature.
+3. Reducing mod 2 discards crucial sign information about this prefix action.
+4. Over `Z[v]`, a radius-3 signed column-frontier recovers most of the
+   descent information.
+
+So the best current conjecture is that the natural B4 rule lives over the
+signed boundary frontier, not over the support-only mod-2 frontier. The mod-2
+transformer is trying to solve a lossy projection of this cleaner integer
+frontier problem.
