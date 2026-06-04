@@ -15,8 +15,6 @@ left normal form. The input is the full projectively normalized Burau tensor,
 kept as a polynomial object modulo `p` rather than specialized to isolated
 numerical values of the indeterminate.
 
-![MLP baseline and transformer training curves](figures/mlp_and_transformer_training_curves.png)
-
 ## Mathematical background
 
 The reduced Burau representation is one of the classical linear representations
