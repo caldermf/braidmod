@@ -16,7 +16,7 @@ reproducible after regenerating the reference dataset under `data/generated/`.
 
 ## `best_transformer/`
 
-This is the final public transformer.
+This is the current public transformer.
 
 - tracked checkpoint: `best_model.pt`
 - tracked log: `train.log`

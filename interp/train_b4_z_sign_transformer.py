@@ -18,6 +18,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from interp.b4_transformer import B4AbsoluteTransformer, B4TransformerConfig  # noqa: E402
+from interp.b4_interp import zero_except_windows  # noqa: E402
 from interp.b4_z_sign import (  # noqa: E402
     SIGN_DIGIT_CONVENTION,
     SIGN_VOCAB_SIZE,
@@ -107,6 +108,11 @@ def checkpoint_payload(
             "logit_2": "s_3 in final right descent set",
         },
         "input_format": "absolute_degree_z_burau_sign_slice_tokens_base3",
+        "input_transform": (
+            "none"
+            if int(args.boundary_only_radius) < 0
+            else f"zero_except_leading_and_trailing_windows_radius_{int(args.boundary_only_radius)}"
+        ),
         "sign_digit_convention": SIGN_DIGIT_CONVENTION,
     }
 
@@ -118,6 +124,7 @@ def batch_to_tokens(
     length: int,
     absolute_depth: int,
     simple_mats: torch.Tensor,
+    boundary_only_radius: int,
 ) -> tuple[torch.Tensor, torch.Tensor]:
     factor_ids = batch["factor_ids"].to(device, non_blocking=True)
     labels = batch["label_bits"].to(device, non_blocking=True)
@@ -127,6 +134,8 @@ def batch_to_tokens(
         absolute_depth=absolute_depth,
         simple_mats=simple_mats,
     )
+    if boundary_only_radius >= 0:
+        tokens = zero_except_windows(tokens, boundary_only_radius, leading=True, trailing=True)
     return tokens, labels
 
 
@@ -142,6 +151,7 @@ def train_one_epoch(
     length: int,
     absolute_depth: int,
     simple_mats: torch.Tensor,
+    boundary_only_radius: int,
 ) -> dict:
     model.train()
     totals = init_totals()
@@ -157,6 +167,7 @@ def train_one_epoch(
             length=length,
             absolute_depth=absolute_depth,
             simple_mats=simple_mats,
+            boundary_only_radius=boundary_only_radius,
         )
         optimizer.zero_grad(set_to_none=True)
         with torch.autocast(device_type=device.type, dtype=torch.float16, enabled=use_amp):
@@ -183,6 +194,7 @@ def evaluate(
     length: int,
     absolute_depth: int,
     simple_mats: torch.Tensor,
+    boundary_only_radius: int,
 ) -> dict:
     model.eval()
     totals = init_totals()
@@ -193,6 +205,7 @@ def evaluate(
             length=length,
             absolute_depth=absolute_depth,
             simple_mats=simple_mats,
+            boundary_only_radius=boundary_only_radius,
         )
         with torch.autocast(device_type=device.type, dtype=torch.float16, enabled=use_amp):
             logits = model(tokens)
@@ -225,6 +238,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--num-heads", type=int, default=6)
     parser.add_argument("--ffn-mult", type=int, default=4)
     parser.add_argument("--dropout", type=float, default=0.0)
+    parser.add_argument(
+        "--boundary-only-radius",
+        type=int,
+        default=-1,
+        help="If nonnegative, zero all input tokens except leading/trailing support windows of this radius.",
+    )
     return parser.parse_args()
 
 
@@ -267,6 +286,11 @@ def main() -> None:
                 "num_params": num_params,
                 "model_config": config.to_dict(),
                 "input_format": "absolute_degree_z_burau_sign_slice_tokens_base3",
+                "input_transform": (
+                    "none"
+                    if int(args.boundary_only_radius) < 0
+                    else f"zero_except_leading_and_trailing_windows_radius_{int(args.boundary_only_radius)}"
+                ),
             },
             indent=2,
         ),
@@ -330,6 +354,7 @@ def main() -> None:
             length=config.length,
             absolute_depth=config.absolute_depth,
             simple_mats=simple_mats,
+            boundary_only_radius=args.boundary_only_radius,
         )
         val_metrics = evaluate(
             model,
@@ -340,6 +365,7 @@ def main() -> None:
             length=config.length,
             absolute_depth=config.absolute_depth,
             simple_mats=simple_mats,
+            boundary_only_radius=args.boundary_only_radius,
         )
         row = {"epoch": epoch, "train": train_metrics, "val": val_metrics, "lr": args.lr}
         history.append(row)
@@ -400,6 +426,7 @@ def main() -> None:
         length=config.length,
         absolute_depth=config.absolute_depth,
         simple_mats=simple_mats,
+        boundary_only_radius=args.boundary_only_radius,
     )
     atomic_json_dump({"history": history, "test": test_metrics}, out_dir / "results.json")
     print(

@@ -59,7 +59,7 @@ token patching.
 
 `interp/run_b3_matched_boundary_patching.py`
 
-Matched-support clean/corrupt pairs. This is the cleanest causal test for the
+Matched-support clean/corrupt pairs. This is the sharpest causal test for the
 boundary rule because clean and corrupt examples share the same support
 interval but have opposite labels.
 
@@ -152,7 +152,7 @@ So the current circuit hypothesis is:
 3. Layer 1 attention as a whole aggregates the boundary evidence at CLS.
 4. The final MLP/head converts this boundary evidence into the descent logit.
 
-This is already a concrete circuit, but it still needs two checks before it is
+This is a concrete circuit candidate, but it still needs two checks before it is
 publication-grade: a corrected probe/decoder showing exactly which matrix-unit
 column is represented in the relevant head outputs, and a circuit-derived
 hand-coded classifier or model-edit that preserves the transformer's behavior.
@@ -177,5 +177,5 @@ Corrected semantic probe highlights:
 - `l1_resid_post_cls` decodes four-way unit tokens at `99.95%`.
 
 This supports the current mechanism: the model does not merely carry a scalar
-label direction; by layer 1, the CLS stream linearly exposes nearly the full
+label direction; by layer 1, the `CLS` stream linearly exposes nearly the full
 extremal matrix-unit identity.

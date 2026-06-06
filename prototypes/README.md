@@ -9,7 +9,7 @@ Examples:
 - older Slurm wrappers with filename-specific provenance
 - internal notes and session checkpoints
 - automation/cluster helpers
-- one-off scripts and legacy temporary outputs
+- single-purpose scripts and legacy temporary outputs
 
 Nothing here is considered part of the clean public API of the repository. The
 top-level README, `docs/`, `jobs/`, `checkpoints/`, `figure_data/`, and

@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="420" viewBox="0 0 1120 420" role="img" aria-labelledby="title desc">
+  <title id="title">B4 signed-frontier mechanism</title>
+  <desc id="desc">The B4 sign-token transformer uses signed Burau boundary bands, attention heads read frontier information into CLS, and the final state predicts descent. Hand finite states do not fully explain the model.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#333"/>
+    </marker>
+    <style>
+      .box { fill: #f8f8f8; stroke: #333; stroke-width: 2; rx: 8; }
+      .blue { fill: #e7f1ff; stroke: #174a7c; }
+      .green { fill: #eef8ee; stroke: #226622; }
+      .orange { fill: #fff7e6; stroke: #8a5a00; }
+      .red { fill: #fff0f0; stroke: #8a2222; }
+      .text { font-family: Arial, sans-serif; font-size: 18px; fill: #111; }
+      .small { font-family: Arial, sans-serif; font-size: 14px; fill: #333; }
+      .label { font-family: Arial, sans-serif; font-size: 15px; fill: #555; }
+      .arrow { stroke: #333; stroke-width: 2.2; marker-end: url(#arrow); fill: none; }
+      .dash { stroke: #8a2222; stroke-width: 2; stroke-dasharray: 7 5; marker-end: url(#arrow); fill: none; }
+    </style>
+  </defs>
+
+  <rect x="28" y="72" width="170" height="96" class="box"/>
+  <text x="113" y="106" text-anchor="middle" class="text">B4 Burau</text>
+  <text x="113" y="132" text-anchor="middle" class="small">3 x 3 coefficient</text>
+  <text x="113" y="154" text-anchor="middle" class="small">matrix over Z[v]</text>
+
+  <rect x="245" y="72" width="190" height="96" class="box blue"/>
+  <text x="340" y="106" text-anchor="middle" class="text">Sign tokens</text>
+  <text x="340" y="132" text-anchor="middle" class="small">0 / - / + per entry</text>
+  <text x="340" y="154" text-anchor="middle" class="small">93.2% full model</text>
+
+  <rect x="485" y="72" width="210" height="96" class="box blue"/>
+  <text x="590" y="106" text-anchor="middle" class="text">Signed frontier</text>
+  <text x="590" y="132" text-anchor="middle" class="small">leading/trailing r=8</text>
+  <text x="590" y="154" text-anchor="middle" class="small">90.6% boundary model</text>
+
+  <rect x="745" y="72" width="180" height="96" class="box orange"/>
+  <text x="835" y="106" text-anchor="middle" class="text">Layer-1 heads</text>
+  <text x="835" y="132" text-anchor="middle" class="small">read frontier</text>
+  <text x="835" y="154" text-anchor="middle" class="small">into CLS</text>
+
+  <rect x="970" y="72" width="120" height="96" class="box green"/>
+  <text x="1030" y="106" text-anchor="middle" class="text">Descent</text>
+  <text x="1030" y="132" text-anchor="middle" class="small">three bits</text>
+  <text x="1030" y="154" text-anchor="middle" class="small">R(x_25)</text>
+
+  <rect x="485" y="245" width="210" height="92" class="box red"/>
+  <text x="590" y="278" text-anchor="middle" class="text">Small hand rules</text>
+  <text x="590" y="304" text-anchor="middle" class="small">best combined: 85.1%</text>
+  <text x="590" y="326" text-anchor="middle" class="small">real collisions remain</text>
+
+  <rect x="745" y="245" width="180" height="92" class="box green"/>
+  <text x="835" y="278" text-anchor="middle" class="text">CLS probes</text>
+  <text x="835" y="304" text-anchor="middle" class="small">descent: 93.2%</text>
+  <text x="835" y="326" text-anchor="middle" class="small">latent rule: 91.2%</text>
+
+  <path d="M 198 120 L 245 120" class="arrow"/>
+  <path d="M 435 120 L 485 120" class="arrow"/>
+  <path d="M 695 120 L 745 120" class="arrow"/>
+  <path d="M 925 120 L 970 120" class="arrow"/>
+  <path d="M 590 168 L 590 245" class="dash"/>
+  <path d="M 835 168 L 835 245" class="arrow"/>
+
+  <text x="590" y="386" text-anchor="middle" class="label">not a solved theorem: finite frontier lookups underperform the model</text>
+  <text x="835" y="42" text-anchor="middle" class="label">the circuit-level object is a signed frontier readout, not a one-token B3 rule</text>
+</svg>

@@ -1,7 +1,7 @@
 # B_3 Boundary-Slice Rule
 
-This note records the first exact criterion found in the `B_3`, `p=2` corpus.
-It is a working research note, not the final interpretation claim.
+This note records the exact boundary-slice criterion found in the `B_3`,
+`p=2` corpus. It is a supporting research note for the public `B_3` report.
 
 ## Empirical Statement
 
@@ -47,7 +47,7 @@ coefficient matrices that are matrix units. With factor ids used by the dataset:
 3: s_2 s_1   leading E01, trailing E10, label {s_1}
 ```
 
-So the leading matrix unit column already encodes the factor's right descent:
+Thus the leading matrix unit column encodes the factor's right descent:
 
 ```text
 leading column 0 -> {s_2}
@@ -180,7 +180,7 @@ main path:
 
 This is consistent with a simple two-stage circuit: boundary-position features
 are represented in token residual streams after layer 0, then layer 1 aggregates
-that information into the CLS stream for the binary decision.
+that information into the `CLS` stream for the binary decision.
 
 Head-level path patching gives a sharper candidate circuit:
 
@@ -195,13 +195,13 @@ Head-level path patching gives a sharper candidate circuit:
   source value gives `0.331`, and patching its full projected output gives
   `0.360`.
 
-The current mechanistic hypothesis is therefore more specific than "the model
-uses a boundary token": layer 0 head 2 broadcasts leading-boundary information,
-layer 1 head 0 reads trailing-boundary information into CLS, and the layer-1
-CLS stream combines these signals before the final classifier.
+The mechanistic hypothesis is therefore more specific than "the model uses a
+boundary token": layer 0 head 2 broadcasts leading-boundary information, layer
+1 head 0 reads trailing-boundary information into `CLS`, and the layer-1 `CLS`
+stream combines these signals before the final classifier.
 
 Semantic probes give independent evidence that the circuit is carrying the
-mathematical object, not just an opaque class bit. On corrected all-shard train
+mathematical object, not only an opaque class bit. On corrected all-shard train
 and test samples, ridge probes from the constant initial CLS embedding are at
 chance (`50.34%` label accuracy, `25.18%` four-way unit-token accuracy). In
 contrast:
@@ -214,7 +214,7 @@ contrast:
   and the four-way boundary unit token at `91.83%`;
 - `l1_resid_post_cls` decodes the four-way boundary unit token at `99.95%`.
 
-Thus the late CLS representation contains an almost perfect linear encoding of
+Thus the late `CLS` representation contains an almost perfect linear encoding of
 the extremal matrix-unit identity, which is stronger than merely encoding the
 binary descent label.
 

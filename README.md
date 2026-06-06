@@ -1,8 +1,19 @@
 # braidmod
 
-`braidmod` is a repo about the four-strand Burau faithfulness
-problem and a new machine-learning strategy for attacking it in characteristic
-`p`.
+## Mechanistic interpretability project
+
+The main current project lives in [`interp/README.md`](interp/README.md). It
+contains the "Learning Braid Group Representations" experiments: an exact
+algorithm-recovery result in `B_3`, followed by a signed-frontier
+mechanistic-interpretability study in `B_4`.
+
+The rest of this root README describes the earlier Burau faithfulness and
+kernel-search work in this repository. That work is still relevant background:
+it motivates why one might train models to recover algebraic structure from
+Burau matrices in the first place.
+
+`braidmod` is a repository about the four-strand Burau faithfulness problem and
+machine-learning strategies for studying it in characteristic `p`.
 
 The central idea is simple:
 
@@ -38,9 +49,8 @@ Modulo primes, the four-strand problem has its own life:
 - at the time of writing, no kernel elements are known
   modulo primes `p >= 7`
 
-So characteristic `p` is not merely a toy shadow of the classical problem. It is
-already interesting in its own right, and higher primes remain almost completely
-unexplored.
+So characteristic `p` is not just a toy version of the classical problem. It is
+interesting in its own right, and higher primes remain largely unexplored.
 
 ## Prior computational work
 
@@ -92,9 +102,9 @@ itself is a `24`-class object in type `A_3`.
 
 ## What this repo shows
 
-Our experiments suggest that a model can learn honest algebraic
-structure from Burau matrices in characteristic `p`, and its uncertainty on
-prefixes can then be reused as a kernel-search signal.
+Our experiments suggest that a model can learn meaningful algebraic structure
+from Burau matrices in characteristic `p`, and its uncertainty on prefixes can
+then be reused as a kernel-search signal.
 
 Concretely:
 
@@ -105,8 +115,10 @@ Concretely:
 - the improved model still fails in a structured way on known kernel elements,
   and that failure is visible in the confusion-score plots
 
-That is the conceptual point of the project. Following the (brilliant!) idea of Charton, Narayanan, Williamson, and Yacobi, we are training a structural predictor and then using its surprise (or "confusion") as
-the downstream mathematical signal in our kernel search.
+That is the conceptual point of the project. Following the idea developed by
+Charton, Narayanan, Williamson, and Yacobi, we train a structural predictor and
+then use its surprise, or "confusion," as a downstream mathematical signal in
+kernel search.
 
 ## Results
 
@@ -116,9 +128,9 @@ the downstream mathematical signal in our kernel search.
 | Transformer validation loss | `0.2178` |
 | Transformer validation factor accuracy | `0.9388` |
 
-The specialized-value descent-set experiments were already strong enough to make
-model confusion interesting, with accuracy in roughly the `80%` range on that
-coarser task. Here our best transformer reaches `93.88%` validation
+The specialized-value descent-set experiments made model confusion interesting,
+with accuracy in roughly the `80%` range on that coarser task. Here our best
+transformer reaches `93.88%` validation
 accuracy on the finer `24`-class final-factor problem while operating directly on
 the full characteristic-`p` polynomial tensor.
 
@@ -128,9 +140,11 @@ kernel examples:
 
 - averaged kernel-hit curves stay well above random controls under smoothing
   windows `7`, `10`, `15`, and `20`
-- the individual kernel-hit trajectories remain visibly elevated, so the effect is
-  not created by averaging alone
-- the known mod 5 kernel element found by Gibson, Williamson, Yacobi (we call it the GWY element) shows the same pattern most clearly in cross-entropy with the target prediction
+- the individual kernel-hit trajectories remain visibly elevated, so the effect
+  is not created by averaging alone
+- the known mod-5 kernel element found by Gibson, Williamson, and Yacobi, which
+  we call the GWY element, shows the same pattern most clearly in target
+  cross-entropy
 
 Here are three figures summarizing the repo:
 
@@ -140,14 +154,15 @@ Here are three figures summarizing the repo:
 
 ## Why this matters for higher primes
 
-The real long-term use case is not `p = 5`, where kernel elements are already
-known. The real target is `p = 7`, `11`, and beyond, where we currently have no
-known kernel elements to aim at.
+The long-term use case is not `p = 5`, where kernel elements are already
+known. The target is `p = 7`, `11`, and beyond, where we currently have no
+known kernel elements to guide the search.
 
 The confusion-score evolution plots in this repo are evidence that the idea is
 not confined to characteristic zero. Even in characteristic `p`, a model trained
 only on ordinary Garside data assigns systematically higher surprise to known
-kernel prefixes than to random controls. That's the kind of information we want to include inside a reservoir-sampling search:
+kernel prefixes than to random controls. This is the kind of information we
+want to include inside a reservoir-sampling search:
 
 - score prefixes by how atypical they look to the model
 - keep only a small weighted reservoir of promising candidates
@@ -191,8 +206,8 @@ The MLP is deliberately simple.
 5. Apply residual feedforward blocks.
 6. Predict the final factor, optionally with an auxiliary descent head.
 
-This baseline matters because it proves the task is real. The Burau matrix is
-already informative enough that a straightforward network can recover a large
+This baseline matters because it shows that the task is learnable. The Burau
+matrix is informative enough that a straightforward network can recover a large
 amount of last-factor structure.
 
 ### Hierarchical transformer
@@ -228,8 +243,8 @@ Those degree summaries form a second sequence. The global encoder adds:
 - `8` attention heads per block
 
 The projected `burau_min_degree` scalar is added as a bias to the global CLS
-token. The final public model is factor-only: no Garside-length conditioning and
-no auxiliary descent loss.
+token. The current public model is factor-only: no Garside-length conditioning
+and no auxiliary descent loss.
 
 #### Final head
 
@@ -259,8 +274,8 @@ The main public story uses four groups of plots.
 
 ![MLP baseline and transformer training curves](figures/mlp_and_transformer_training_curves.png)
 
-This is the cleanest first figure for the repo. It shows the original MLP and
-the final transformer side by side, with both training and validation behavior
+This is the best first figure for the repo. It shows the original MLP and the
+final transformer side by side, with both training and validation behavior
 visible in one place.
 
 ### 2. Known-kernel vs random controls
