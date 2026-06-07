@@ -521,6 +521,76 @@ literal 22-way factor ID. This fits the algebraic picture: the model is closer
 to recovering a transported descent-relevant signature than to memorizing
 factor identities.
 
+## Sparse Autoencoder Pass
+
+We then trained TopK sparse autoencoders on the boundary-only Z-sign model's
+internal activations. The point was not just to see whether an SAE can
+reconstruct a residual stream. The real question was whether a small family of
+sparse features carries the descent computation causally and robustly.
+
+Artifacts:
+
+```text
+interp/artifacts/b4_l25_zsign_boundary_r8_sae_final/results.json
+interp/artifacts/b4_l25_zsign_boundary_r8_sae_final/SUMMARY.md
+interp/B4_SAE_FINAL.md
+```
+
+The final analysis used the seed-42 and seed-7 boundary-only models, `8,192`
+held-out examples, `32,768` train examples for feature-only classifiers, and
+`512` prefix-fixed counterfactual pairs.
+
+The main result is:
+
+> A few dozen late-CLS SAE features recover almost all of the boundary-only
+> model's descent-set computation. They beat count-matched random active
+> features, recur across seeds, and are causally fed by layer-1 CLS attention
+> paths.
+
+Sparse-feature classifiers:
+
+| Seed | Site | Feature set | k | Exact | Bit | Agreement with transformer | Random exact |
+|---|---|---|---:|---:|---:|---:|---:|
+| seed 7 | `final_hidden_cls` | binary | `29` | `89.4%` | `96.3%` | `96.0%` | `49.6%` |
+| seed 7 | `final_hidden_cls` | descent | `16` | `89.2%` | `96.3%` | `95.7%` | `36.1%` |
+| seed 42 | `final_hidden_cls` | descent | `17` | `89.0%` | `96.1%` | `94.4%` | `36.0%` |
+| seed 42 | `final_hidden_cls` | binary | `27` | `88.9%` | `96.1%` | `94.4%` | `46.9%` |
+| seed 7 | `l1_resid_post_cls` | binary | `32` | `88.0%` | `95.7%` | `92.9%` | `52.8%` |
+| seed 42 | `l1_resid_post_cls` | binary | `31` | `87.0%` | `95.4%` | `91.4%` | `52.6%` |
+
+The teacher models are about `90.6-90.8%` exact on the same evaluation slice.
+So selected sparse features recover nearly all of the model; random active
+features do not.
+
+The same feature families recur across seeds. Matching selected seed-42
+features to seed-7 features by activation correlation gives mean best-match
+correlations of `0.649` at `final_hidden_cls` and `0.613` at
+`l1_resid_post_cls`, with most best matches also selected by the seed-7
+feature-label analysis.
+
+Path patching gives the circuit-level connection. On prefix-fixed pairs,
+patching all layer-1 attention-head outputs at `CLS` recovers the selected
+late SAE features and much of the clean decision:
+
+| Seed | Target site | Selected features | Feature recovery | Logit recovery |
+|---|---|---:|---:|---:|
+| seed 42 | `l1_resid_post_cls` | `31` | `81.1%` | `76.2%` |
+| seed 42 | `final_hidden_cls` | `27` | `76.6%` | `76.2%` |
+| seed 7 | `final_hidden_cls` | `29` | `69.0%` | `64.6%` |
+| seed 7 | `l1_resid_post_cls` | `32` | `65.1%` | `64.6%` |
+
+The SAE result therefore sharpens the mechanistic story:
+
+```text
+signed boundary tokens
+    -> layer-1 CLS attention paths
+    -> sparse late-CLS descent features
+    -> output logits
+```
+
+This is not a single-feature theorem. Individual features are meaningful but
+small. The causal unit is a sparse distributed feature family.
+
 ## Hidden-Theorem Search
 
 We then explicitly searched for a cleaner algebraic rule over `Z[v]`.
@@ -655,6 +725,8 @@ Mechanistic experiments:
   `interp/artifacts/b4_l25_zsign_boundary_r8_xfmr2_small_seed7/results.json`
 - Boundary-only Z-sign seed-7 deep dive:
   `interp/artifacts/b4_l25_zsign_boundary_r8_xfmr2_small_seed7_deep_dive/results.json`
+- Boundary-only Z-sign SAE final analysis:
+  `interp/artifacts/b4_l25_zsign_boundary_r8_sae_final/results.json`
 - Hidden-theorem search:
   `interp/artifacts/b4_l25_z_hidden_theorem_combo/results.json`
 
@@ -666,6 +738,9 @@ Primary scripts:
 - `interp/run_b4_firstpass_interp.py`
 - `interp/run_b4_z_sign_firstpass_interp.py`
 - `interp/run_b4_z_sign_deep_dive.py`
+- `interp/run_b4_sae_experiments.py`
+- `interp/stress_b4_sae_controls.py`
+- `interp/analyze_b4_sae_final.py`
 - `interp/audit_b4_integer_boundary.py`
 - `interp/search_b4_hidden_theorem.py`
 
