@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="680" viewBox="0 0 1200 680" role="img" aria-labelledby="title desc">
+  <title id="title">Reproducibility map</title>
+  <desc id="desc">A flowchart mapping dataset generation, model training, algebraic audits, interpretability runs, SAE runs, and public reports.</desc>
+  <defs>
+    <style>
+      .bg { fill: #f8fafb; }
+      .panel { fill: #ffffff; stroke: #c8d1dd; stroke-width: 2; rx: 12; }
+      .data { fill: #e8f4ff; stroke: #4f8fc7; stroke-width: 2; rx: 9; }
+      .model { fill: #f1ecff; stroke: #7b65c9; stroke-width: 2; rx: 9; }
+      .audit { fill: #fff4df; stroke: #c48a2b; stroke-width: 2; rx: 9; }
+      .interp { fill: #eaf7f0; stroke: #4d9b72; stroke-width: 2; rx: 9; }
+      .report { fill: #ffffff; stroke: #6b7585; stroke-width: 2; rx: 9; }
+      .title { font: 700 32px Inter, Arial, sans-serif; fill: #172033; }
+      .sub { font: 500 17px Inter, Arial, sans-serif; fill: #4b5568; }
+      .h { font: 700 18px Inter, Arial, sans-serif; fill: #172033; }
+      .txt { font: 500 14px Inter, Arial, sans-serif; fill: #273044; }
+      .small { font: 500 12px Inter, Arial, sans-serif; fill: #4b5568; }
+      .arrow { stroke: #536176; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+      .thin { stroke: #a4adba; stroke-width: 2; fill: none; marker-end: url(#arrow); }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M 0 0 L 10 4 L 0 8 z" fill="#536176"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" width="1200" height="680"/>
+  <text class="title" x="58" y="58">Reproducibility Map</text>
+  <text class="sub" x="58" y="88">Every public claim should trace back to data, jobs, JSON artifacts, and reports.</text>
+
+  <rect class="panel" x="58" y="124" width="1084" height="520"/>
+
+  <rect class="data" x="92" y="184" width="210" height="86"/>
+  <text class="h" x="116" y="216">Dataset generation</text>
+  <text class="txt" x="116" y="242">B3 full corpus</text>
+  <text class="txt" x="116" y="262">B4 length-25 corpus</text>
+
+  <path class="arrow" d="M 308 227 L 390 227"/>
+
+  <rect class="model" x="402" y="156" width="230" height="86"/>
+  <text class="h" x="426" y="188">Model training</text>
+  <text class="txt" x="426" y="214">B3 transformer</text>
+  <text class="txt" x="426" y="234">B4 mod-2 and Z-sign</text>
+
+  <rect class="audit" x="402" y="292" width="230" height="86"/>
+  <text class="h" x="426" y="324">Algebraic audits</text>
+  <text class="txt" x="426" y="350">B3 exact rule</text>
+  <text class="txt" x="426" y="370">B4 hidden-theorem search</text>
+
+  <path class="thin" d="M 302 246 C 342 246, 350 335, 390 335"/>
+
+  <path class="arrow" d="M 638 199 L 720 199"/>
+  <path class="arrow" d="M 638 335 L 720 335"/>
+
+  <rect class="interp" x="732" y="156" width="230" height="86"/>
+  <text class="h" x="756" y="188">Interp runs</text>
+  <text class="txt" x="756" y="214">patching and probes</text>
+  <text class="txt" x="756" y="234">head/circuit analyses</text>
+
+  <rect class="interp" x="732" y="292" width="230" height="86"/>
+  <text class="h" x="756" y="324">SAE runs</text>
+  <text class="txt" x="756" y="350">train SAEs</text>
+  <text class="txt" x="756" y="370">stress and final analysis</text>
+
+  <path class="arrow" d="M 968 199 L 1030 257"/>
+  <path class="arrow" d="M 968 335 L 1030 315"/>
+
+  <rect class="report" x="1000" y="250" width="98" height="76"/>
+  <text class="h" x="1026" y="282">Reports</text>
+  <text class="small" x="1018" y="306">README</text>
+  <text class="small" x="1018" y="322">RESULTS</text>
+
+  <rect class="panel" x="92" y="450" width="1010" height="88"/>
+  <text class="h" x="122" y="482">Tracked scripts, ignored artifacts</text>
+  <text class="txt" x="122" y="510">Scripts and Slurm wrappers are in git. Large datasets, model checkpoints, JSON outputs, and logs live under ignored paths.</text>
+  <text class="small" x="122" y="532">See REPRODUCIBILITY.md for exact claim-to-artifact mappings.</text>
+
+  <rect class="data" x="122" y="570" width="170" height="36"/>
+  <text class="small" x="146" y="592">data/generated</text>
+  <rect class="model" x="318" y="570" width="170" height="36"/>
+  <text class="small" x="358" y="592">artifacts</text>
+  <rect class="audit" x="514" y="570" width="170" height="36"/>
+  <text class="small" x="548" y="592">slurm_logs</text>
+  <rect class="report" x="710" y="570" width="240" height="36"/>
+  <text class="small" x="754" y="592">public Markdown summaries</text>
+</svg>

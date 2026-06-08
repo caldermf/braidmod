@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="680" viewBox="0 0 1200 680" role="img" aria-labelledby="title desc">
+  <title id="title">B4 hidden theorem gap</title>
+  <desc id="desc">A bar chart comparing mod-2 support, hand-written signed boundary rules, the boundary-only transformer, and the full Z-sign transformer.</desc>
+  <defs>
+    <style>
+      .bg { fill: #f8fafb; }
+      .panel { fill: #ffffff; stroke: #c8d1dd; stroke-width: 2; rx: 12; }
+      .axis { stroke: #6b7585; stroke-width: 2; }
+      .grid { stroke: #e1e7ef; stroke-width: 1; }
+      .mod2 { fill: #8fa6bd; }
+      .hand { fill: #c87933; }
+      .boundary { fill: #7b65c9; }
+      .full { fill: #4d9b72; }
+      .title { font: 700 32px Inter, Arial, sans-serif; fill: #172033; }
+      .sub { font: 500 17px Inter, Arial, sans-serif; fill: #4b5568; }
+      .h { font: 700 21px Inter, Arial, sans-serif; fill: #172033; }
+      .txt { font: 500 15px Inter, Arial, sans-serif; fill: #273044; }
+      .small { font: 500 13px Inter, Arial, sans-serif; fill: #4b5568; }
+      .num { font: 700 20px Inter, Arial, sans-serif; fill: #172033; }
+      .callout { fill: #fff4df; stroke: #c48a2b; stroke-width: 2; rx: 9; }
+      .line { stroke: #4d9b72; stroke-width: 3; stroke-dasharray: 8 8; }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1200" height="680"/>
+  <text class="title" x="58" y="58">B4 Hidden-Theorem Gap</text>
+  <text class="sub" x="58" y="88">The model learns a richer signed state than our best small hand-written finite rule.</text>
+
+  <rect class="panel" x="70" y="124" width="780" height="520"/>
+  <text class="h" x="104" y="164">Exact descent-set accuracy</text>
+
+  <line class="axis" x1="150" y1="560" x2="775" y2="560"/>
+  <line class="axis" x1="150" y1="190" x2="150" y2="560"/>
+  <line class="grid" x1="150" y1="486" x2="775" y2="486"/>
+  <line class="grid" x1="150" y1="412" x2="775" y2="412"/>
+  <line class="grid" x1="150" y1="338" x2="775" y2="338"/>
+  <line class="grid" x1="150" y1="264" x2="775" y2="264"/>
+  <text class="small" x="116" y="564">0.0</text>
+  <text class="small" x="116" y="490">0.2</text>
+  <text class="small" x="116" y="416">0.4</text>
+  <text class="small" x="116" y="342">0.6</text>
+  <text class="small" x="116" y="268">0.8</text>
+  <text class="small" x="116" y="194">1.0</text>
+
+  <!-- y = 560 - value * 370 -->
+  <rect class="mod2" x="210" y="296" width="90" height="264"/>
+  <rect class="hand" x="350" y="245" width="90" height="315"/>
+  <rect class="boundary" x="490" y="225" width="90" height="335"/>
+  <rect class="full" x="630" y="215" width="90" height="345"/>
+
+  <text class="num" x="212" y="286">71.4%</text>
+  <text class="num" x="352" y="235">85.1%</text>
+  <text class="num" x="492" y="215">90.6%</text>
+  <text class="num" x="632" y="205">93.2%</text>
+
+  <text class="small" x="200" y="590">mod-2</text>
+  <text class="small" x="190" y="610">support model</text>
+  <text class="small" x="336" y="590">best hand</text>
+  <text class="small" x="330" y="610">finite state</text>
+  <text class="small" x="470" y="590">boundary-only</text>
+  <text class="small" x="486" y="610">transformer</text>
+  <text class="small" x="622" y="590">full Z-sign</text>
+  <text class="small" x="624" y="610">transformer</text>
+
+  <line class="line" x1="150" y1="215" x2="775" y2="215"/>
+  <text class="small" x="690" y="190">full model level</text>
+
+  <rect class="panel" x="890" y="124" width="250" height="520"/>
+  <text class="h" x="920" y="166">Interpretation</text>
+
+  <rect class="callout" x="920" y="202" width="190" height="82"/>
+  <text class="txt" x="940" y="232">Signs matter:</text>
+  <text class="small" x="940" y="256">Z[v] sign tokens beat</text>
+  <text class="small" x="940" y="276">mod-2 support.</text>
+
+  <rect class="callout" x="920" y="316" width="190" height="96"/>
+  <text class="txt" x="940" y="346">Hand rules help,</text>
+  <text class="small" x="940" y="370">but collide on real</text>
+  <text class="small" x="940" y="390">held-out examples.</text>
+
+  <rect class="callout" x="920" y="444" width="190" height="108"/>
+  <text class="txt" x="940" y="474">The model uses a</text>
+  <text class="small" x="940" y="498">richer distributed</text>
+  <text class="small" x="940" y="518">signed-frontier state.</text>
+  <text class="small" x="940" y="538">That is the gap.</text>
+</svg>

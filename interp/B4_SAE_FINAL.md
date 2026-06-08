@@ -46,6 +46,14 @@ interp/artifacts/b4_l25_zsign_boundary_r8_sae_final/results.json
 interp/artifacts/b4_l25_zsign_boundary_r8_sae_final/SUMMARY.md
 ```
 
+Figures:
+
+```text
+interp/figures/b4_sae_circuit.svg
+interp/figures/b4_sae_controls.svg
+interp/figures/b4_sae_feature_atlas.svg
+```
+
 Runner:
 
 ```text

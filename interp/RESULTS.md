@@ -7,12 +7,14 @@ gitignored.
 ## Public Claim
 
 The repo demonstrates exact algorithm recovery in `B_3` and a strong
-signed-frontier mechanism in `B_4`.
+signed-frontier sparse-code mechanism in `B_4`.
 
 ```text
 B3: exact theorem -> trained transformer -> decoded internal algorithm.
 B4: no exact small theorem found -> signed frontier is causally central and
     supports a readable high-performing boundary-only transformer.
+B4 SAE: selected sparse late-CLS features recover nearly all of the
+    boundary-only model and survive controls.
 ```
 
 ## B3: Exact Algorithm Recovery
@@ -254,6 +256,61 @@ This replicate supports the main claim while also showing that component
 identities are not the invariant. The stable object is the boundary-only
 frontier computation and its late-CLS readout, not a specific numbered head.
 
+## B4: Sparse Autoencoder Feature Code
+
+Final SAE artifact:
+
+```text
+interp/artifacts/b4_l25_zsign_boundary_r8_sae_final/results.json
+interp/artifacts/b4_l25_zsign_boundary_r8_sae_final/SUMMARY.md
+```
+
+Final SAE report:
+
+```text
+interp/B4_SAE_FINAL.md
+```
+
+The SAE pass asks whether the boundary-only model's late `CLS` descent
+computation decomposes into sparse, causal features. It uses the seed-42 and
+seed-7 boundary-only models, `8,192` held-out examples, `32,768` feature-probe
+train examples, and `512` prefix-fixed counterfactual pairs.
+
+Selected sparse-feature classifiers:
+
+| Seed | Site | Feature set | k | Exact | Bit | Agreement with transformer | Random exact |
+|---|---|---|---:|---:|---:|---:|---:|
+| seed 7 | `final_hidden_cls` | binary | `29` | `89.4%` | `96.3%` | `96.0%` | `49.6%` |
+| seed 7 | `final_hidden_cls` | descent | `16` | `89.2%` | `96.3%` | `95.7%` | `36.1%` |
+| seed 42 | `final_hidden_cls` | descent | `17` | `89.0%` | `96.1%` | `94.4%` | `36.0%` |
+| seed 42 | `final_hidden_cls` | binary | `27` | `88.9%` | `96.1%` | `94.4%` | `46.9%` |
+| seed 7 | `l1_resid_post_cls` | binary | `32` | `88.0%` | `95.7%` | `92.9%` | `52.8%` |
+| seed 42 | `l1_resid_post_cls` | binary | `31` | `87.0%` | `95.4%` | `91.4%` | `52.6%` |
+
+Cross-seed recurrence:
+
+| Site | Matched seed-42 features | Mean best corr | Best match also selected in seed 7 |
+|---|---:|---:|---:|
+| `final_hidden_cls` | `48` | `0.649` | `37` |
+| `l1_resid_post_cls` | `48` | `0.613` | `37` |
+| `l1_attn_out_cls` | `53` | `0.552` | `36` |
+
+Path patching into selected sparse features:
+
+| Seed | Target site | Selected features | Layer-1 CLS-head feature recovery | Logit recovery |
+|---|---|---:|---:|---:|
+| seed 42 | `l1_resid_post_cls` | `31` | `81.1%` | `76.2%` |
+| seed 42 | `final_hidden_cls` | `27` | `76.6%` | `76.2%` |
+| seed 7 | `final_hidden_cls` | `29` | `69.0%` | `64.6%` |
+| seed 7 | `l1_resid_post_cls` | `32` | `65.1%` | `64.6%` |
+
+Interpretation:
+
+> The boundary-only model's late `CLS` state contains a sparse distributed
+> descent code. A few dozen selected SAE features recover nearly all of the
+> model, random active features do not, the same feature families recur across
+> seeds, and layer-1 `CLS` attention causally feeds the code.
+
 ## B4: Hidden-Theorem Search
 
 Artifact:
@@ -295,5 +352,7 @@ The repo should make this distinction clear:
 - `B_3`: exact algorithm recovered inside a transformer.
 - `B_4`: signed-frontier mechanism found, causally localized, and bounded by a
   serious negative theorem search.
+- `B_4` SAE: the boundary-only model's late state decomposes into a sparse
+  distributed descent code that is causally testable and seed-robust.
 
 That combination is the result.

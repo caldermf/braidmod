@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="620" viewBox="0 0 1120 620" role="img" aria-labelledby="title desc">
+  <title id="title">B4 SAE selected features versus controls</title>
+  <desc id="desc">A metric summary comparing selected sparse features to random controls, cross-seed recurrence, and layer-1 path patching.</desc>
+  <defs>
+    <style>
+      .bg { fill: #f8fafb; }
+      .panel { fill: #ffffff; stroke: #c8d1dd; stroke-width: 2; rx: 10; }
+      .axis { stroke: #6b7585; stroke-width: 2; }
+      .grid { stroke: #e2e7ee; stroke-width: 1; }
+      .sel { fill: #4d9b72; }
+      .rand { fill: #c87933; }
+      .path { fill: #7b65c9; }
+      .corr { fill: #4f8fc7; }
+      .title { font: 700 30px Inter, Arial, sans-serif; fill: #172033; }
+      .sub { font: 500 16px Inter, Arial, sans-serif; fill: #4b5568; }
+      .h { font: 700 19px Inter, Arial, sans-serif; fill: #172033; }
+      .txt { font: 500 14px Inter, Arial, sans-serif; fill: #273044; }
+      .small { font: 500 12px Inter, Arial, sans-serif; fill: #4b5568; }
+      .num { font: 700 16px Inter, Arial, sans-serif; fill: #172033; }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1120" height="620"/>
+  <text class="title" x="56" y="58">B4 SAE Controls</text>
+  <text class="sub" x="56" y="87">The sparse feature result survives random controls, seed checks, and path patching.</text>
+
+  <rect class="panel" x="56" y="124" width="316" height="420"/>
+  <text class="h" x="84" y="162">Selected features vs random</text>
+  <text class="small" x="84" y="185">Exact accuracy, final_hidden_cls</text>
+  <line class="axis" x1="112" y1="472" x2="318" y2="472"/>
+  <line class="axis" x1="112" y1="222" x2="112" y2="472"/>
+  <line class="grid" x1="112" y1="347" x2="318" y2="347"/>
+  <text class="small" x="76" y="351">0.5</text>
+  <text class="small" x="78" y="476">0.0</text>
+  <text class="small" x="75" y="226">1.0</text>
+  <rect class="sel" x="142" y="249" width="54" height="223"/>
+  <rect class="rand" x="226" y="382" width="54" height="90"/>
+  <text class="num" x="145" y="239">0.89</text>
+  <text class="num" x="229" y="372">0.36</text>
+  <text class="small" x="132" y="500">selected</text>
+  <text class="small" x="224" y="500">random</text>
+  <text class="small" x="84" y="528">Seed 42 descent features: 17 selected</text>
+
+  <rect class="panel" x="402" y="124" width="316" height="420"/>
+  <text class="h" x="430" y="162">Cross-seed recurrence</text>
+  <text class="small" x="430" y="185">Mean best activation correlation</text>
+  <line class="axis" x1="458" y1="472" x2="664" y2="472"/>
+  <line class="axis" x1="458" y1="222" x2="458" y2="472"/>
+  <line class="grid" x1="458" y1="347" x2="664" y2="347"/>
+  <text class="small" x="422" y="351">0.5</text>
+  <text class="small" x="424" y="476">0.0</text>
+  <text class="small" x="421" y="226">1.0</text>
+  <rect class="corr" x="488" y="310" width="46" height="162"/>
+  <rect class="corr" x="558" y="319" width="46" height="153"/>
+  <rect class="corr" x="628" y="334" width="46" height="138"/>
+  <text class="num" x="486" y="300">0.649</text>
+  <text class="num" x="556" y="309">0.613</text>
+  <text class="num" x="626" y="324">0.552</text>
+  <text class="small" x="478" y="500">final</text>
+  <text class="small" x="550" y="500">resid</text>
+  <text class="small" x="624" y="500">attn</text>
+  <text class="small" x="430" y="528">37 of 48 final/resid best matches selected</text>
+
+  <rect class="panel" x="748" y="124" width="316" height="420"/>
+  <text class="h" x="776" y="162">Path patching</text>
+  <text class="small" x="776" y="185">Layer-1 CLS head-output patch</text>
+  <line class="axis" x1="804" y1="472" x2="1010" y2="472"/>
+  <line class="axis" x1="804" y1="222" x2="804" y2="472"/>
+  <line class="grid" x1="804" y1="347" x2="1010" y2="347"/>
+  <text class="small" x="768" y="351">0.5</text>
+  <text class="small" x="770" y="476">0.0</text>
+  <text class="small" x="767" y="226">1.0</text>
+  <rect class="path" x="838" y="269" width="54" height="203"/>
+  <rect class="path" x="926" y="282" width="54" height="190"/>
+  <text class="num" x="838" y="259">0.811</text>
+  <text class="num" x="927" y="272">0.762</text>
+  <text class="small" x="824" y="500">feature</text>
+  <text class="small" x="924" y="500">logit</text>
+  <text class="small" x="776" y="528">Seed 42 l1_resid_post_cls selected features</text>
+
+  <rect class="panel" x="190" y="562" width="740" height="36"/>
+  <circle cx="218" cy="580" r="7" class="sel"/>
+  <text class="small" x="232" y="584">selected SAE features</text>
+  <circle cx="392" cy="580" r="7" class="rand"/>
+  <text class="small" x="406" y="584">random active features</text>
+  <circle cx="592" cy="580" r="7" class="corr"/>
+  <text class="small" x="606" y="584">cross-seed matches</text>
+  <circle cx="782" cy="580" r="7" class="path"/>
+  <text class="small" x="796" y="584">path patching</text>
+</svg>

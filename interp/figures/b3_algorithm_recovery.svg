@@ -1,56 +1,77 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1040" height="360" viewBox="0 0 1040 360" role="img" aria-labelledby="title desc">
-  <title id="title">B3 algorithm recovery circuit</title>
-  <desc id="desc">The B3 transformer reads extremal Burau boundary units into CLS, where a linear decoder recovers the matrix unit and the exact column rule predicts descent.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="680" viewBox="0 0 1200 680" role="img" aria-labelledby="title desc">
+  <title id="title">B3 exact algorithm recovery</title>
+  <desc id="desc">A light-background circuit diagram showing the B3 Burau boundary matrix unit, the transformer late CLS representation, and the exact descent rule.</desc>
   <defs>
-    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#333"/>
-    </marker>
     <style>
-      .box { fill: #f8f8f8; stroke: #333; stroke-width: 2; rx: 8; }
-      .accent { fill: #e7f1ff; stroke: #174a7c; }
-      .result { fill: #eef8ee; stroke: #226622; }
-      .warn { fill: #fff7e6; stroke: #8a5a00; }
-      .text { font-family: Arial, sans-serif; font-size: 18px; fill: #111; }
-      .small { font-family: Arial, sans-serif; font-size: 14px; fill: #333; }
-      .label { font-family: Arial, sans-serif; font-size: 15px; fill: #555; }
-      .arrow { stroke: #333; stroke-width: 2.2; marker-end: url(#arrow); fill: none; }
+      .bg { fill: #f8fafb; }
+      .panel { fill: #ffffff; stroke: #c8d1dd; stroke-width: 2; rx: 12; }
+      .input { fill: #e8f4ff; stroke: #4f8fc7; stroke-width: 2; rx: 9; }
+      .model { fill: #f1ecff; stroke: #7b65c9; stroke-width: 2; rx: 9; }
+      .rule { fill: #fff4df; stroke: #c48a2b; stroke-width: 2; rx: 9; }
+      .out { fill: #eaf7f0; stroke: #4d9b72; stroke-width: 2; rx: 9; }
+      .title { font: 700 32px Inter, Arial, sans-serif; fill: #172033; }
+      .sub { font: 500 17px Inter, Arial, sans-serif; fill: #4b5568; }
+      .h { font: 700 19px Inter, Arial, sans-serif; fill: #172033; }
+      .txt { font: 500 15px Inter, Arial, sans-serif; fill: #273044; }
+      .small { font: 500 13px Inter, Arial, sans-serif; fill: #4b5568; }
+      .num { font: 700 23px Inter, Arial, sans-serif; fill: #172033; }
+      .arrow { stroke: #536176; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+      .thin { stroke: #d8dee8; stroke-width: 2; }
     </style>
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M 0 0 L 10 4 L 0 8 z" fill="#536176"/>
+    </marker>
   </defs>
 
-  <rect x="30" y="72" width="170" height="96" class="box"/>
-  <text x="115" y="108" text-anchor="middle" class="text">Burau matrix</text>
-  <text x="115" y="134" text-anchor="middle" class="small">over (Z/2)[v]</text>
-  <text x="115" y="156" text-anchor="middle" class="small">degree slices</text>
+  <rect class="bg" width="1200" height="680"/>
+  <text class="title" x="58" y="58">B3 Exact Algorithm Recovery</text>
+  <text class="sub" x="58" y="88">The model internally represents the algebraic object used by the theorem.</text>
 
-  <rect x="250" y="72" width="185" height="96" class="box accent"/>
-  <text x="342" y="108" text-anchor="middle" class="text">Extremal slice</text>
-  <text x="342" y="134" text-anchor="middle" class="small">unique matrix unit</text>
-  <text x="342" y="156" text-anchor="middle" class="small">E_ij at boundary</text>
+  <rect class="panel" x="58" y="124" width="1084" height="430"/>
 
-  <rect x="485" y="72" width="170" height="96" class="box"/>
-  <text x="570" y="108" text-anchor="middle" class="text">Transformer</text>
-  <text x="570" y="134" text-anchor="middle" class="small">2 layers, CLS</text>
-  <text x="570" y="156" text-anchor="middle" class="small">attention readout</text>
+  <rect class="input" x="92" y="234" width="205" height="96"/>
+  <text class="h" x="118" y="266">Burau matrix</text>
+  <text class="txt" x="118" y="292">over (Z/2)[v]</text>
+  <text class="small" x="118" y="314">degree-indexed slices</text>
 
-  <rect x="705" y="72" width="185" height="96" class="box accent"/>
-  <text x="797" y="108" text-anchor="middle" class="text">Late CLS</text>
-  <text x="797" y="134" text-anchor="middle" class="small">linear decoder</text>
-  <text x="797" y="156" text-anchor="middle" class="small">recovers E_ij</text>
+  <path class="arrow" d="M 304 282 L 382 282"/>
 
-  <rect x="705" y="220" width="185" height="76" class="box warn"/>
-  <text x="797" y="252" text-anchor="middle" class="text">Exact rule</text>
-  <text x="797" y="276" text-anchor="middle" class="small">unit column -> descent</text>
+  <rect class="input" x="394" y="234" width="230" height="96"/>
+  <text class="h" x="420" y="266">Extremal slice</text>
+  <text class="txt" x="420" y="292">unique matrix unit</text>
+  <text class="small" x="420" y="314">E_ij at the boundary</text>
 
-  <rect x="930" y="220" width="82" height="76" class="box result"/>
-  <text x="971" y="252" text-anchor="middle" class="text">99.99%</text>
-  <text x="971" y="276" text-anchor="middle" class="small">accuracy</text>
+  <path class="arrow" d="M 632 282 L 710 282"/>
 
-  <path d="M 200 120 L 250 120" class="arrow"/>
-  <path d="M 435 120 L 485 120" class="arrow"/>
-  <path d="M 655 120 L 705 120" class="arrow"/>
-  <path d="M 797 168 L 797 220" class="arrow"/>
-  <path d="M 890 258 L 930 258" class="arrow"/>
+  <rect class="model" x="722" y="234" width="205" height="96"/>
+  <text class="h" x="752" y="266">Transformer</text>
+  <text class="txt" x="752" y="292">2 layers, CLS</text>
+  <text class="small" x="752" y="314">attention readout</text>
 
-  <text x="342" y="208" text-anchor="middle" class="label">theorem object is visible</text>
-  <text x="797" y="42" text-anchor="middle" class="label">the model represents the theorem object internally</text>
+  <path class="arrow" d="M 824 338 L 824 394"/>
+
+  <rect class="model" x="694" y="406" width="260" height="86"/>
+  <text class="h" x="724" y="438">Late CLS</text>
+  <text class="txt" x="724" y="464">linear decoder recovers E_ij</text>
+
+  <path class="arrow" d="M 962 449 L 1012 449"/>
+
+  <rect class="rule" x="1018" y="406" width="92" height="86"/>
+  <text class="h" x="1044" y="438">Rule</text>
+  <text class="small" x="1035" y="462">unit column</text>
+  <text class="small" x="1042" y="480">to descent</text>
+
+  <path class="arrow" d="M 509 338 C 509 414, 608 449, 686 449"/>
+  <text class="small" x="390" y="386">the theorem object is visible</text>
+
+  <line class="thin" x1="92" y1="580" x2="1110" y2="580"/>
+  <rect class="out" x="92" y="596" width="300" height="54"/>
+  <text class="num" x="118" y="626">100.00%</text>
+  <text class="small" x="220" y="622">exact boundary rule</text>
+  <rect class="out" x="450" y="596" width="300" height="54"/>
+  <text class="num" x="476" y="626">99.99%</text>
+  <text class="small" x="570" y="622">decoded rule accuracy</text>
+  <rect class="out" x="808" y="596" width="302" height="54"/>
+  <text class="num" x="834" y="626">1.000</text>
+  <text class="small" x="922" y="622">late CLS patch recovery</text>
 </svg>

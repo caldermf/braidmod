@@ -693,6 +693,10 @@ Public-facing summaries:
 - Project overview: `interp/README.md`
 - Tracked metrics: `interp/RESULTS.md`
 - Mechanism diagram: `interp/figures/b4_signed_frontier.svg`
+- B3/B4 comparison figure: `interp/figures/b3_vs_b4_comparison.svg`
+- Hidden-theorem gap figure: `interp/figures/b4_hidden_theorem_gap.svg`
+- SAE circuit figure: `interp/figures/b4_sae_circuit.svg`
+- SAE controls figure: `interp/figures/b4_sae_controls.svg`
 
 Main datasets and models:
 

@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="680" viewBox="0 0 1200 680" role="img" aria-labelledby="title desc">
+  <title id="title">B4 SAE feature atlas</title>
+  <desc id="desc">A schematic atlas showing positive evidence features, negative evidence features, mixed features, and output combination for B4 descent logits.</desc>
+  <defs>
+    <style>
+      .bg { fill: #f8fafb; }
+      .panel { fill: #ffffff; stroke: #c8d1dd; stroke-width: 2; rx: 12; }
+      .pos { fill: #eaf7f0; stroke: #4d9b72; stroke-width: 2; rx: 9; }
+      .neg { fill: #fff2e5; stroke: #c87933; stroke-width: 2; rx: 9; }
+      .mix { fill: #f1ecff; stroke: #7b65c9; stroke-width: 2; rx: 9; }
+      .out { fill: #e8f4ff; stroke: #4f8fc7; stroke-width: 2; rx: 9; }
+      .title { font: 700 32px Inter, Arial, sans-serif; fill: #172033; }
+      .sub { font: 500 17px Inter, Arial, sans-serif; fill: #4b5568; }
+      .h { font: 700 21px Inter, Arial, sans-serif; fill: #172033; }
+      .txt { font: 500 15px Inter, Arial, sans-serif; fill: #273044; }
+      .small { font: 500 13px Inter, Arial, sans-serif; fill: #4b5568; }
+      .feature { font: 700 18px Inter, Arial, sans-serif; fill: #172033; }
+      .num { font: 700 20px Inter, Arial, sans-serif; fill: #172033; }
+      .arrow { stroke: #536176; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+      .thin { stroke: #d8dee8; stroke-width: 2; }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M 0 0 L 10 4 L 0 8 z" fill="#536176"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" width="1200" height="680"/>
+  <text class="title" x="58" y="58">B4 SAE Feature Atlas</text>
+  <text class="sub" x="58" y="88">The recovered code is sparse and interpretable, but distributed across evidence features.</text>
+
+  <rect class="panel" x="58" y="124" width="1084" height="520"/>
+  <text class="h" x="92" y="166">Late CLS sparse features</text>
+  <text class="small" x="92" y="190">Examples are drawn from final_hidden_cls and l1_resid_post_cls SAEs.</text>
+
+  <rect class="pos" x="92" y="230" width="250" height="104"/>
+  <text class="feature" x="116" y="260">Positive evidence</text>
+  <text class="txt" x="116" y="286">features fire when a</text>
+  <text class="txt" x="116" y="308">descent bit is present</text>
+  <text class="small" x="116" y="328">example: descent_s1 = 1</text>
+
+  <rect class="neg" x="92" y="372" width="250" height="104"/>
+  <text class="feature" x="116" y="402">Negative evidence</text>
+  <text class="txt" x="116" y="428">features fire when a</text>
+  <text class="txt" x="116" y="450">descent bit is absent</text>
+  <text class="small" x="116" y="470">example: descent_s3 = 0</text>
+
+  <rect class="mix" x="402" y="230" width="250" height="104"/>
+  <text class="feature" x="426" y="260">Mixed signatures</text>
+  <text class="txt" x="426" y="286">features write several</text>
+  <text class="txt" x="426" y="308">logit directions at once</text>
+  <text class="small" x="426" y="328">not one feature per bit</text>
+
+  <rect class="mix" x="402" y="372" width="250" height="104"/>
+  <text class="feature" x="426" y="402">Boundary concepts</text>
+  <text class="txt" x="426" y="428">features track signed</text>
+  <text class="txt" x="426" y="450">frontier-derived states</text>
+  <text class="small" x="426" y="470">same concepts recur by seed</text>
+
+  <path class="arrow" d="M 350 282 C 380 282, 380 282, 394 282"/>
+  <path class="arrow" d="M 350 424 C 380 424, 380 424, 394 424"/>
+  <path class="arrow" d="M 660 282 C 705 282, 705 338, 746 338"/>
+  <path class="arrow" d="M 660 424 C 705 424, 705 366, 746 366"/>
+
+  <rect class="out" x="758" y="246" width="300" height="190"/>
+  <text class="feature" x="786" y="282">Output head combines evidence</text>
+  <line class="thin" x1="786" y1="306" x2="1030" y2="306"/>
+  <text class="txt" x="786" y="334">s1 logit: positive and negative</text>
+  <text class="txt" x="786" y="360">s2 logit: shared mixed features</text>
+  <text class="txt" x="786" y="386">s3 logit: signed-frontier evidence</text>
+  <text class="small" x="786" y="414">linear classifier on selected features works</text>
+
+  <rect class="panel" x="92" y="532" width="250" height="58"/>
+  <text class="num" x="118" y="560">0.89 exact</text>
+  <text class="small" x="118" y="582">selected-feature classifier</text>
+
+  <rect class="panel" x="402" y="532" width="250" height="58"/>
+  <text class="num" x="426" y="560">0.96 agreement</text>
+  <text class="small" x="426" y="582">with seed-7 transformer</text>
+
+  <rect class="panel" x="758" y="532" width="300" height="58"/>
+  <text class="num" x="786" y="560">distributed code</text>
+  <text class="small" x="786" y="582">feature families are the causal unit</text>
+</svg>

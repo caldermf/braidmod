@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="620" viewBox="0 0 1120 620" role="img" aria-labelledby="title desc">
+  <title id="title">Learning Braid Group Representations project story</title>
+  <desc id="desc">A two-column summary of the B3 exact algorithm recovery and the B4 signed-frontier sparse-code result.</desc>
+  <defs>
+    <style>
+      .bg { fill: #f7f8fb; }
+      .panel { fill: #ffffff; stroke: #c7cfdd; stroke-width: 2; rx: 10; }
+      .b3 { fill: #e8f4ff; stroke: #4f8fc7; }
+      .b4 { fill: #f1ecff; stroke: #7b65c9; }
+      .sae { fill: #eaf7f0; stroke: #4d9b72; }
+      .warn { fill: #fff4df; stroke: #c48a2b; }
+      .title { font: 700 30px Inter, Arial, sans-serif; fill: #172033; }
+      .subtitle { font: 500 17px Inter, Arial, sans-serif; fill: #4b5568; }
+      .h { font: 700 22px Inter, Arial, sans-serif; fill: #172033; }
+      .body { font: 500 16px Inter, Arial, sans-serif; fill: #273044; }
+      .small { font: 500 14px Inter, Arial, sans-serif; fill: #4b5568; }
+      .metric { font: 700 20px Inter, Arial, sans-serif; fill: #172033; }
+      .arrow { stroke: #536176; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M 0 0 L 10 4 L 0 8 z" fill="#536176"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="1120" height="620"/>
+  <text class="title" x="56" y="58">Learning Braid Group Representations</text>
+  <text class="subtitle" x="56" y="88">From exact algorithm recovery in B3 to a signed-frontier sparse code in B4</text>
+
+  <rect class="panel" x="56" y="126" width="480" height="416"/>
+  <rect class="panel" x="584" y="126" width="480" height="416"/>
+
+  <text class="h" x="86" y="168">B3: exact recovered algorithm</text>
+  <rect class="b3" x="86" y="196" width="390" height="54" rx="8"/>
+  <text class="body" x="108" y="229">Burau boundary matrix unit over (Z/2)[v]</text>
+  <path class="arrow" d="M 281 254 L 281 292"/>
+
+  <rect class="b3" x="86" y="300" width="390" height="54" rx="8"/>
+  <text class="body" x="122" y="333">Late CLS linearly represents the unit</text>
+  <path class="arrow" d="M 281 358 L 281 396"/>
+
+  <rect class="b3" x="86" y="404" width="390" height="54" rx="8"/>
+  <text class="body" x="134" y="437">Decoded unit plus exact column rule</text>
+
+  <text class="metric" x="104" y="500">99.99% decoded-rule accuracy</text>
+  <text class="small" x="104" y="525">100.00% matched boundary patching</text>
+
+  <text class="h" x="614" y="168">B4: signed-frontier sparse code</text>
+  <rect class="b4" x="614" y="196" width="390" height="54" rx="8"/>
+  <text class="body" x="650" y="229">Signed Z[v] boundary frontier bands</text>
+  <path class="arrow" d="M 809 254 L 809 292"/>
+
+  <rect class="b4" x="614" y="300" width="390" height="54" rx="8"/>
+  <text class="body" x="645" y="333">Layer-1 CLS attention reads frontier</text>
+  <path class="arrow" d="M 809 358 L 809 396"/>
+
+  <rect class="sae" x="614" y="404" width="390" height="54" rx="8"/>
+  <text class="body" x="648" y="437">Sparse late-CLS descent feature code</text>
+
+  <text class="metric" x="632" y="500">89.4% selected-feature classifier</text>
+  <text class="small" x="632" y="525">93.2% full Z-sign model, 90.6% boundary-only</text>
+
+  <rect class="warn" x="208" y="562" width="704" height="36" rx="8"/>
+  <text class="small" x="246" y="585">B4 is not an exact theorem yet: the result is a causal signed-frontier mechanism with sparse recovered features.</text>
+</svg>

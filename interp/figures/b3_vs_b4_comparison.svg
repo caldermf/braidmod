@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="680" viewBox="0 0 1200 680" role="img" aria-labelledby="title desc">
+  <title id="title">B3 versus B4 comparison</title>
+  <desc id="desc">A side-by-side comparison of exact B3 algorithm recovery and the harder B4 signed-frontier sparse-code result.</desc>
+  <defs>
+    <style>
+      .bg { fill: #f7f8fb; }
+      .panel { fill: #ffffff; stroke: #c7cfdd; stroke-width: 2; rx: 12; }
+      .b3 { fill: #e8f4ff; stroke: #4f8fc7; stroke-width: 2; rx: 9; }
+      .b4 { fill: #f1ecff; stroke: #7b65c9; stroke-width: 2; rx: 9; }
+      .sae { fill: #eaf7f0; stroke: #4d9b72; stroke-width: 2; rx: 9; }
+      .warn { fill: #fff4df; stroke: #c48a2b; stroke-width: 2; rx: 9; }
+      .title { font: 700 32px Inter, Arial, sans-serif; fill: #172033; }
+      .sub { font: 500 17px Inter, Arial, sans-serif; fill: #4b5568; }
+      .h { font: 700 24px Inter, Arial, sans-serif; fill: #172033; }
+      .label { font: 700 15px Inter, Arial, sans-serif; fill: #4b5568; text-transform: uppercase; }
+      .txt { font: 500 16px Inter, Arial, sans-serif; fill: #273044; }
+      .small { font: 500 13px Inter, Arial, sans-serif; fill: #4b5568; }
+      .metric { font: 700 24px Inter, Arial, sans-serif; fill: #172033; }
+      .metricSmall { font: 700 18px Inter, Arial, sans-serif; fill: #172033; }
+      .rule { font: 600 15px Inter, Arial, sans-serif; fill: #273044; }
+      .arrow { stroke: #536176; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+      .sep { stroke: #d8dee8; stroke-width: 2; }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M 0 0 L 10 4 L 0 8 z" fill="#536176"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" width="1200" height="680"/>
+  <text class="title" x="58" y="58">B3 vs B4: Same Question, Different Regime</text>
+  <text class="sub" x="58" y="88">The project moves from exact theorem recovery to a causal signed-frontier sparse code.</text>
+
+  <rect class="panel" x="58" y="124" width="520" height="510"/>
+  <rect class="panel" x="622" y="124" width="520" height="510"/>
+
+  <text class="h" x="92" y="166">B3: exact algorithm recovered</text>
+  <text class="small" x="92" y="193">Predict whether the final factor descends by s1 or s2.</text>
+
+  <rect class="b3" x="92" y="222" width="430" height="70"/>
+  <text class="label" x="118" y="248">Mathematical rule</text>
+  <text class="txt" x="118" y="272">Extremal Burau matrix unit column determines descent</text>
+  <path class="arrow" d="M 307 298 L 307 332"/>
+
+  <rect class="b3" x="92" y="340" width="430" height="70"/>
+  <text class="label" x="118" y="366">Model representation</text>
+  <text class="txt" x="118" y="390">Late CLS linearly decodes the extremal unit</text>
+  <path class="arrow" d="M 307 416 L 307 450"/>
+
+  <rect class="b3" x="92" y="458" width="430" height="70"/>
+  <text class="label" x="118" y="484">Recovered algorithm</text>
+  <text class="txt" x="118" y="508">Decoded unit plus hand column rule</text>
+
+  <line class="sep" x1="92" y1="554" x2="522" y2="554"/>
+  <text class="metric" x="104" y="590">99.99%</text>
+  <text class="small" x="196" y="585">decoded-rule accuracy</text>
+  <text class="metricSmall" x="384" y="590">100.00%</text>
+  <text class="small" x="384" y="612">boundary patch</text>
+
+  <text class="h" x="656" y="166">B4: sparse signed-frontier code</text>
+  <text class="small" x="656" y="193">Predict the three-bit final right descent set.</text>
+
+  <rect class="warn" x="656" y="222" width="430" height="70"/>
+  <text class="label" x="682" y="248">Algebraic obstruction</text>
+  <text class="txt" x="682" y="272">No exact small finite boundary rule found</text>
+  <path class="arrow" d="M 871 298 L 871 332"/>
+
+  <rect class="b4" x="656" y="340" width="430" height="70"/>
+  <text class="label" x="682" y="366">Representation shift</text>
+  <text class="txt" x="682" y="390">Signed Z[v] frontier data makes the task learnable</text>
+  <path class="arrow" d="M 871 416 L 871 450"/>
+
+  <rect class="sae" x="656" y="458" width="430" height="70"/>
+  <text class="label" x="682" y="484">Recovered mechanism</text>
+  <text class="txt" x="682" y="508">Sparse late-CLS descent features drive logits</text>
+
+  <line class="sep" x1="656" y1="554" x2="1086" y2="554"/>
+  <text class="metric" x="668" y="590">93.2%</text>
+  <text class="small" x="754" y="585">full Z-sign model</text>
+  <text class="metricSmall" x="910" y="590">89.4%</text>
+  <text class="small" x="910" y="612">SAE feature classifier</text>
+</svg>

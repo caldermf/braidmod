@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="620" viewBox="0 0 1120 620" role="img" aria-labelledby="title desc">
+  <title id="title">B4 SAE sparse-code circuit</title>
+  <desc id="desc">A circuit diagram showing signed boundary tokens feeding layer-1 CLS attention, sparse SAE features, and descent logits.</desc>
+  <defs>
+    <style>
+      .bg { fill: #f8fafb; }
+      .card { fill: #ffffff; stroke: #c8d1dd; stroke-width: 2; rx: 10; }
+      .input { fill: #eaf4ff; stroke: #4f8fc7; stroke-width: 2; rx: 8; }
+      .attn { fill: #f1ecff; stroke: #7b65c9; stroke-width: 2; rx: 8; }
+      .feat { fill: #eaf7f0; stroke: #4d9b72; stroke-width: 2; rx: 8; }
+      .logit { fill: #fff2e5; stroke: #c87933; stroke-width: 2; rx: 8; }
+      .title { font: 700 30px Inter, Arial, sans-serif; fill: #172033; }
+      .sub { font: 500 16px Inter, Arial, sans-serif; fill: #4b5568; }
+      .h { font: 700 20px Inter, Arial, sans-serif; fill: #172033; }
+      .txt { font: 500 15px Inter, Arial, sans-serif; fill: #273044; }
+      .small { font: 500 13px Inter, Arial, sans-serif; fill: #4b5568; }
+      .metric { font: 700 17px Inter, Arial, sans-serif; fill: #172033; }
+      .arrow { stroke: #536176; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+      .thin { stroke: #8894a5; stroke-width: 1.5; fill: none; }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M 0 0 L 10 4 L 0 8 z" fill="#536176"/>
+    </marker>
+  </defs>
+
+  <rect class="bg" width="1120" height="620"/>
+  <text class="title" x="56" y="58">B4 SAE Circuit</text>
+  <text class="sub" x="56" y="87">The boundary-only Z-sign transformer builds a sparse descent code at late CLS.</text>
+
+  <rect class="card" x="56" y="122" width="1008" height="380"/>
+
+  <rect class="input" x="94" y="196" width="210" height="114"/>
+  <text class="h" x="120" y="229">Input</text>
+  <text class="txt" x="120" y="259">radius-8 signed</text>
+  <text class="txt" x="120" y="282">leading and trailing</text>
+  <text class="txt" x="120" y="305">Burau frontier bands</text>
+
+  <path class="arrow" d="M 310 253 L 408 253"/>
+
+  <rect class="attn" x="420" y="196" width="220" height="114"/>
+  <text class="h" x="448" y="229">Readout path</text>
+  <text class="txt" x="448" y="259">layer-1 attention</text>
+  <text class="txt" x="448" y="282">writes frontier state</text>
+  <text class="txt" x="448" y="305">into CLS</text>
+
+  <path class="arrow" d="M 646 253 L 744 253"/>
+
+  <rect class="feat" x="756" y="164" width="230" height="178"/>
+  <text class="h" x="782" y="199">Sparse code</text>
+  <text class="txt" x="782" y="229">few dozen SAE features</text>
+  <text class="txt" x="782" y="252">represent descent evidence</text>
+  <line class="thin" x1="782" y1="276" x2="960" y2="276"/>
+  <text class="metric" x="782" y="306">89.4% exact</text>
+  <text class="small" x="782" y="327">selected feature classifier</text>
+
+  <path class="arrow" d="M 871 350 L 871 408"/>
+
+  <rect class="logit" x="756" y="418" width="230" height="54"/>
+  <text class="txt" x="795" y="451">descent logits: s1, s2, s3</text>
+
+  <rect class="card" x="94" y="532" width="292" height="54"/>
+  <text class="metric" x="118" y="558">Cross-seed recurrence</text>
+  <text class="small" x="118" y="580">mean best corr 0.649 at final CLS</text>
+
+  <rect class="card" x="414" y="532" width="292" height="54"/>
+  <text class="metric" x="438" y="558">Path patching</text>
+  <text class="small" x="438" y="580">up to 81.1% feature recovery</text>
+
+  <rect class="card" x="734" y="532" width="292" height="54"/>
+  <text class="metric" x="758" y="558">Controls</text>
+  <text class="small" x="758" y="580">selected features beat random active sets</text>
+</svg>

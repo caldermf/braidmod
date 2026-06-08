@@ -1,66 +1,87 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="420" viewBox="0 0 1120 420" role="img" aria-labelledby="title desc">
-  <title id="title">B4 signed-frontier mechanism</title>
-  <desc id="desc">The B4 sign-token transformer uses signed Burau boundary bands, attention heads read frontier information into CLS, and the final state predicts descent. Hand finite states do not fully explain the model.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="680" viewBox="0 0 1200 680" role="img" aria-labelledby="title desc">
+  <title id="title">B4 signed frontier mechanism</title>
+  <desc id="desc">A light-background mechanism diagram for B4 showing sign tokens, signed frontier bands, layer-1 heads, descent logits, hand-rule gap, and CLS probes.</desc>
   <defs>
-    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
-      <path d="M 0 0 L 10 5 L 0 10 z" fill="#333"/>
-    </marker>
     <style>
-      .box { fill: #f8f8f8; stroke: #333; stroke-width: 2; rx: 8; }
-      .blue { fill: #e7f1ff; stroke: #174a7c; }
-      .green { fill: #eef8ee; stroke: #226622; }
-      .orange { fill: #fff7e6; stroke: #8a5a00; }
-      .red { fill: #fff0f0; stroke: #8a2222; }
-      .text { font-family: Arial, sans-serif; font-size: 18px; fill: #111; }
-      .small { font-family: Arial, sans-serif; font-size: 14px; fill: #333; }
-      .label { font-family: Arial, sans-serif; font-size: 15px; fill: #555; }
-      .arrow { stroke: #333; stroke-width: 2.2; marker-end: url(#arrow); fill: none; }
-      .dash { stroke: #8a2222; stroke-width: 2; stroke-dasharray: 7 5; marker-end: url(#arrow); fill: none; }
+      .bg { fill: #f8fafb; }
+      .panel { fill: #ffffff; stroke: #c8d1dd; stroke-width: 2; rx: 12; }
+      .input { fill: #e8f4ff; stroke: #4f8fc7; stroke-width: 2; rx: 9; }
+      .frontier { fill: #f1ecff; stroke: #7b65c9; stroke-width: 2; rx: 9; }
+      .head { fill: #fff4df; stroke: #c48a2b; stroke-width: 2; rx: 9; }
+      .out { fill: #eaf7f0; stroke: #4d9b72; stroke-width: 2; rx: 9; }
+      .gap { fill: #fff0f0; stroke: #c95757; stroke-width: 2; rx: 9; }
+      .title { font: 700 32px Inter, Arial, sans-serif; fill: #172033; }
+      .sub { font: 500 17px Inter, Arial, sans-serif; fill: #4b5568; }
+      .h { font: 700 19px Inter, Arial, sans-serif; fill: #172033; }
+      .txt { font: 500 15px Inter, Arial, sans-serif; fill: #273044; }
+      .small { font: 500 13px Inter, Arial, sans-serif; fill: #4b5568; }
+      .num { font: 700 21px Inter, Arial, sans-serif; fill: #172033; }
+      .arrow { stroke: #536176; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+      .dashed { stroke: #c95757; stroke-width: 2.5; stroke-dasharray: 8 7; fill: none; marker-end: url(#arrowRed); }
+      .thin { stroke: #d8dee8; stroke-width: 2; }
     </style>
+    <marker id="arrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M 0 0 L 10 4 L 0 8 z" fill="#536176"/>
+    </marker>
+    <marker id="arrowRed" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M 0 0 L 10 4 L 0 8 z" fill="#c95757"/>
+    </marker>
   </defs>
 
-  <rect x="28" y="72" width="170" height="96" class="box"/>
-  <text x="113" y="106" text-anchor="middle" class="text">B4 Burau</text>
-  <text x="113" y="132" text-anchor="middle" class="small">3 x 3 coefficient</text>
-  <text x="113" y="154" text-anchor="middle" class="small">matrix over Z[v]</text>
+  <rect class="bg" width="1200" height="680"/>
+  <text class="title" x="58" y="58">B4 Signed Frontier Mechanism</text>
+  <text class="sub" x="58" y="88">The circuit-level object is a signed frontier readout, not a one-token B3-style rule.</text>
 
-  <rect x="245" y="72" width="190" height="96" class="box blue"/>
-  <text x="340" y="106" text-anchor="middle" class="text">Sign tokens</text>
-  <text x="340" y="132" text-anchor="middle" class="small">0 / - / + per entry</text>
-  <text x="340" y="154" text-anchor="middle" class="small">93.2% full model</text>
+  <rect class="panel" x="58" y="124" width="1084" height="430"/>
 
-  <rect x="485" y="72" width="210" height="96" class="box blue"/>
-  <text x="590" y="106" text-anchor="middle" class="text">Signed frontier</text>
-  <text x="590" y="132" text-anchor="middle" class="small">leading/trailing r=8</text>
-  <text x="590" y="154" text-anchor="middle" class="small">90.6% boundary model</text>
+  <rect class="input" x="88" y="214" width="170" height="94"/>
+  <text class="h" x="122" y="246">B4 Burau</text>
+  <text class="txt" x="112" y="272">3 x 3 coefficient</text>
+  <text class="small" x="118" y="292">matrix over Z[v]</text>
 
-  <rect x="745" y="72" width="180" height="96" class="box orange"/>
-  <text x="835" y="106" text-anchor="middle" class="text">Layer-1 heads</text>
-  <text x="835" y="132" text-anchor="middle" class="small">read frontier</text>
-  <text x="835" y="154" text-anchor="middle" class="small">into CLS</text>
+  <path class="arrow" d="M 264 261 L 334 261"/>
 
-  <rect x="970" y="72" width="120" height="96" class="box green"/>
-  <text x="1030" y="106" text-anchor="middle" class="text">Descent</text>
-  <text x="1030" y="132" text-anchor="middle" class="small">three bits</text>
-  <text x="1030" y="154" text-anchor="middle" class="small">R(x_25)</text>
+  <rect class="input" x="346" y="214" width="190" height="94"/>
+  <text class="h" x="386" y="246">Sign tokens</text>
+  <text class="txt" x="382" y="272">0 / - / + per entry</text>
+  <text class="small" x="374" y="292">93.2% full model</text>
 
-  <rect x="485" y="245" width="210" height="92" class="box red"/>
-  <text x="590" y="278" text-anchor="middle" class="text">Small hand rules</text>
-  <text x="590" y="304" text-anchor="middle" class="small">best combined: 85.1%</text>
-  <text x="590" y="326" text-anchor="middle" class="small">real collisions remain</text>
+  <path class="arrow" d="M 542 261 L 612 261"/>
 
-  <rect x="745" y="245" width="180" height="92" class="box green"/>
-  <text x="835" y="278" text-anchor="middle" class="text">CLS probes</text>
-  <text x="835" y="304" text-anchor="middle" class="small">descent: 93.2%</text>
-  <text x="835" y="326" text-anchor="middle" class="small">latent rule: 91.2%</text>
+  <rect class="frontier" x="624" y="214" width="210" height="94"/>
+  <text class="h" x="668" y="246">Signed frontier</text>
+  <text class="txt" x="662" y="272">leading/trailing r=8</text>
+  <text class="small" x="660" y="292">90.6% boundary model</text>
 
-  <path d="M 198 120 L 245 120" class="arrow"/>
-  <path d="M 435 120 L 485 120" class="arrow"/>
-  <path d="M 695 120 L 745 120" class="arrow"/>
-  <path d="M 925 120 L 970 120" class="arrow"/>
-  <path d="M 590 168 L 590 245" class="dash"/>
-  <path d="M 835 168 L 835 245" class="arrow"/>
+  <path class="arrow" d="M 840 261 L 910 261"/>
 
-  <text x="590" y="386" text-anchor="middle" class="label">not a solved theorem: finite frontier lookups underperform the model</text>
-  <text x="835" y="42" text-anchor="middle" class="label">the circuit-level object is a signed frontier readout, not a one-token B3 rule</text>
+  <rect class="head" x="922" y="214" width="160" height="94"/>
+  <text class="h" x="966" y="246">Layer-1</text>
+  <text class="txt" x="954" y="272">CLS attention</text>
+  <text class="small" x="956" y="292">reads frontier</text>
+
+  <path class="arrow" d="M 1002 316 L 1002 378"/>
+
+  <rect class="out" x="892" y="390" width="220" height="86"/>
+  <text class="h" x="942" y="424">Descent state</text>
+  <text class="txt" x="934" y="450">late CLS probes</text>
+  <text class="small" x="922" y="468">direct descent probe: 93.2%</text>
+
+  <path class="dashed" d="M 730 316 L 730 378"/>
+  <rect class="gap" x="610" y="390" width="240" height="86"/>
+  <text class="h" x="662" y="424">Hand-rule gap</text>
+  <text class="txt" x="646" y="450">best finite state: 85.1%</text>
+  <text class="small" x="644" y="468">real collisions remain</text>
+
+  <line class="thin" x1="88" y1="580" x2="1112" y2="580"/>
+  <rect class="out" x="88" y="596" width="270" height="54"/>
+  <text class="num" x="114" y="626">90.2%</text>
+  <text class="small" x="200" y="622">boundary patch recovery</text>
+  <rect class="out" x="402" y="596" width="300" height="54"/>
+  <text class="num" x="428" y="626">90.6%</text>
+  <text class="small" x="514" y="622">boundary-only accuracy</text>
+  <rect class="out" x="746" y="596" width="366" height="54"/>
+  <text class="num" x="772" y="626">not solved</text>
+  <text class="small" x="884" y="616">small hand rules</text>
+  <text class="small" x="884" y="636">underperform the model</text>
 </svg>
