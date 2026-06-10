@@ -1,18 +1,6 @@
 # braidmod
 
-## Mechanistic interpretability project
-
-The main current project lives in [`interp/README.md`](interp/README.md). It
-contains the "Learning Braid Group Representations" experiments: an exact
-algorithm-recovery result in `B_3`, followed by a signed-frontier
-mechanistic-interpretability study in `B_4`.
-
-The rest of this root README describes the earlier Burau faithfulness and
-kernel-search work in this repository. That work is still relevant background:
-it motivates why one might train models to recover algebraic structure from
-Burau matrices in the first place.
-
-`braidmod` is a repository about the four-strand Burau faithfulness problem and
+This is a repository about the four-strand Burau faithfulness problem and
 machine-learning strategies for studying it in characteristic `p`.
 
 The central idea is simple:
